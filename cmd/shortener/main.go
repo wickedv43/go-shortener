@@ -42,20 +42,18 @@ func getShort(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := r.URL.String()
-	log.Println(url)
 	short := strings.TrimPrefix(url, "/")
-	log.Println(short)
 
-	respUrl, ok := S.Get(short)
+	respURL, ok := S.Get(short)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
 
-	log.Println("GET:", short, "RETURN:", respUrl)
+	log.Println("GET:", short, "RETURN:", respURL)
 
 	w.WriteHeader(http.StatusTemporaryRedirect)
-	w.Header().Set("content-type", "text/plain; charset=UTF-8")
-	w.Write([]byte(respUrl))
+	w.Header().Set("Location", respURL)
+
 }
 
 func main() {
