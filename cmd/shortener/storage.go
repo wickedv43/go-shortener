@@ -12,18 +12,19 @@ func (s *Storage) Save(url string, short string) {
 	s.Data[short] = url
 }
 
-func (s *Storage) Get(short string) string {
-	return s.Data[short]
+func (s *Storage) Get(short string) (string, bool) {
+	url, ok := s.Data[short]
+	return url, ok
 }
 
-func (s *Storage) InStorage(url string) bool {
+func (s *Storage) InStorage(url string) (bool, string) {
 	var res bool
-	for _, v := range s.Data {
+	for short, v := range s.Data {
 		if v == url {
-			res = true
+			return true, short
 		}
 	}
-	return res
+	return res, ""
 }
 
 var S Storage

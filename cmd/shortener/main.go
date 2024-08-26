@@ -1,28 +1,34 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func addNew(w http.ResponseWriter, r *http.Request) {
 	var url []byte
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
-	_, err := r.Body.Read(url)
+	url, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 
-	if S.InStorage(string(url)) {
-		http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
+	var short string
+	ok, short := S.InStorage(string(url))
+	if !ok {
+		short = Shorting()
 	}
-
-	short := Shorting()
 	S.Save(string(url), short)
+	log.Println(string(url), short)
+
 	w.WriteHeader(http.StatusCreated)
+
 	w.Header().Set("content-type", "text/plain; charset=UTF-8")
 
 	resURL := "http://localhost:8080/" + short
@@ -30,7 +36,26 @@ func addNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func getShort(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
+	url := r.URL.String()
+	log.Println(url)
+	short := strings.TrimPrefix(url, "/")
+	log.Println(short)
+
+	respUrl, ok := S.Get(short)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	log.Println("GET:", short, "RETURN:", respUrl)
+
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.Header().Set("content-type", "text/plain; charset=UTF-8")
+	w.Write([]byte(respUrl))
 }
 
 func main() {
@@ -41,7 +66,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(`/`, addNew)
-	//mux.HandleFunc(`/{id}`, getShort)
+	mux.HandleFunc(`/{id}`, getShort)
 
 	err := http.ListenAndServe(`:8080`, mux)
 	if err != nil {
