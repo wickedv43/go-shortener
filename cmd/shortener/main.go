@@ -50,10 +50,8 @@ func getShort(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("GET:", short, "RETURN:", respURL)
-
-	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Header().Set("Location", respURL)
-
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func main() {
