@@ -27,12 +27,12 @@ func addNew(w http.ResponseWriter, r *http.Request) {
 	S.Save(string(url), short)
 	log.Println(string(url), short)
 
-	w.WriteHeader(http.StatusCreated)
-
-	w.Header().Set("content-type", "text/plain; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/plain")
 
 	resURL := "http://localhost:8080/" + short
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(resURL))
+
 }
 
 func getShort(w http.ResponseWriter, r *http.Request) {
