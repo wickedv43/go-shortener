@@ -42,11 +42,13 @@ func Test_addNew(t *testing.T) {
 
 			require.Equal(t, test.want.code, res.StatusCode)
 
-			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
-
 			require.NoError(t, err)
 			require.NotEmpty(t, resBody)
+
+			err = res.Body.Close()
+			require.NoError(t, err)
+
 			require.Contains(t, string(resBody), "http://localhost:8080/")
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 		})
@@ -84,18 +86,23 @@ func Test_getShort(t *testing.T) {
 
 			require.Equal(t, http.StatusCreated, res.StatusCode)
 
-			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 			require.NotEmpty(t, resBody)
+
+			err = res.Body.Close()
+			require.NoError(t, err)
 
 			resBodyStr := string(resBody)
 			short, ok := strings.CutPrefix(resBodyStr, "http://localhost:8080/")
 			require.True(t, ok)
 
 			req := httptest.NewRequest(http.MethodGet, "/"+short, nil)
+
 			w = httptest.NewRecorder()
+
 			getShort(w, req)
+
 			res = w.Result()
 			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, body, res.Header.Get("Location"))
