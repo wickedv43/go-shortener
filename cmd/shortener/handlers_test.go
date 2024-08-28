@@ -76,8 +76,8 @@ func Test_getShort(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			S.Init()
 
-			body := "https://practicum.yandex.ru/"
-			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
+			url := "https://practicum.yandex.ru/"
+			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(url)))
 
 			w := httptest.NewRecorder()
 			addNew(w, request)
@@ -104,8 +104,12 @@ func Test_getShort(t *testing.T) {
 			getShort(w, req)
 
 			res = w.Result()
+
+			err = res.Body.Close()
+			require.NoError(t, err)
+
 			require.Equal(t, test.want.code, res.StatusCode)
-			require.Equal(t, body, res.Header.Get("Location"))
+			require.Equal(t, url, res.Header.Get("Location"))
 		})
 	}
 }
