@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
@@ -41,7 +40,7 @@ func Test_addNew(t *testing.T) {
 
 			res := w.Result()
 
-			assert.Equal(t, test.want.code, res.StatusCode)
+			require.Equal(t, test.want.code, res.StatusCode)
 
 			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
@@ -83,7 +82,7 @@ func Test_getShort(t *testing.T) {
 
 			res := w.Result()
 
-			assert.Equal(t, http.StatusCreated, res.StatusCode)
+			require.Equal(t, http.StatusCreated, res.StatusCode)
 
 			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
@@ -98,8 +97,8 @@ func Test_getShort(t *testing.T) {
 			w = httptest.NewRecorder()
 			getShort(w, req)
 			res = w.Result()
-			assert.Equal(t, test.want.code, res.StatusCode)
-			assert.Equal(t, body, res.Header.Get("Location"))
+			require.Equal(t, test.want.code, res.StatusCode)
+			require.Equal(t, body, res.Header.Get("Location"))
 		})
 	}
 }
