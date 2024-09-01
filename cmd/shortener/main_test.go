@@ -1,10 +1,13 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
+	"github.com/gin-gonic/gin"
 )
 
-func Test_main(t *testing.T) {
-	assert.NotEmpty(t, S.Data)
+func SetupRouter() *gin.Engine {
+	router := gin.Default()
+	router.POST("/", addNew)
+	router.GET("/:short", getShort)
+	S.Init()
+	return router
 }

@@ -1,22 +1,19 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
 )
 
 func main() {
-	log.Println("Starting server...")
-
+	r := gin.Default()
 	S.Init()
-	log.Println("Initializing database...")
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, addNew)
-	mux.HandleFunc(`/{id}`, getShort)
+	r.POST(`/`, addNew)
+	r.GET(`/:short`, getShort)
 
-	err := http.ListenAndServe(`:8080`, mux)
+	err := r.Run("localhost:8080")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

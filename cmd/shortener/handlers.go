@@ -1,55 +1,48 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
-	"strings"
 )
 
-func addNew(w http.ResponseWriter, r *http.Request) {
-	var url []byte
-	if r.Method != "POST" {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
-
-	url, err := io.ReadAll(r.Body)
+func addNew(c *gin.Context) {
+	url, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	var short string
 	ok, short := S.InStorage(string(url))
 	if !ok {
 		short = Shorting()
+		S.Save(string(url), short)
 	}
-	S.Save(string(url), short)
+
 	log.Println(string(url), short)
 
-	w.Header().Set("Content-Type", "text/plain")
+	c.Header("Content-Type", "text/plain")
 
 	resURL := "http://localhost:8080/" + short
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(resURL))
+
+	c.Writer.WriteHeader(http.StatusCreated)
+	_, err = c.Writer.Write([]byte(resURL))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 
 }
 
-func getShort(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
-
-	url := r.URL.String()
-	short := strings.TrimPrefix(url, "/")
+func getShort(c *gin.Context) {
+	short := c.Param("short")
 
 	respURL, ok := S.Get(short)
+	fmt.Println(respURL, short)
 	if !ok {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
 	}
 
-	log.Println("GET:", short, "RETURN:", respURL)
-	w.Header().Set("Location", respURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	c.Header("Location", respURL)
+	c.Writer.WriteHeader(http.StatusTemporaryRedirect)
 }

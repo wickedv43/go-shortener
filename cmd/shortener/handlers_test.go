@@ -6,10 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
+// Test for "/"
 func Test_addNew(t *testing.T) {
 	type want struct {
 		code        int
@@ -30,16 +30,14 @@ func Test_addNew(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			S.Init()
-
+			router := SetupRouter()
 			body := "https://practicum.yandex.ru/"
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
 
 			w := httptest.NewRecorder()
-			addNew(w, request)
+			router.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, test.want.code, res.StatusCode)
 
 			resBody, err := io.ReadAll(res.Body)
@@ -55,6 +53,7 @@ func Test_addNew(t *testing.T) {
 	}
 }
 
+// Test for "/{short}"
 func Test_getShort(t *testing.T) {
 	type want struct {
 		code        int
@@ -74,38 +73,21 @@ func Test_getShort(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			S.Init()
+			router := SetupRouter()
 
 			url := "https://practicum.yandex.ru/"
-			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(url)))
-
-			w := httptest.NewRecorder()
-			addNew(w, request)
-
-			res := w.Result()
-
-			require.Equal(t, http.StatusCreated, res.StatusCode)
-
-			resBody, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
-			require.NotEmpty(t, resBody)
-
-			err = res.Body.Close()
-			require.NoError(t, err)
-
-			resBodyStr := string(resBody)
-			short, ok := strings.CutPrefix(resBodyStr, "http://localhost:8080/")
-			require.True(t, ok)
+			short := Shorting()
+			S.Save(url, short)
 
 			req := httptest.NewRequest(http.MethodGet, "/"+short, nil)
 
-			w = httptest.NewRecorder()
+			w := httptest.NewRecorder()
 
-			getShort(w, req)
+			router.ServeHTTP(w, req)
 
-			res = w.Result()
+			res := w.Result()
 
-			err = res.Body.Close()
+			err := res.Body.Close()
 			require.NoError(t, err)
 
 			require.Equal(t, test.want.code, res.StatusCode)
