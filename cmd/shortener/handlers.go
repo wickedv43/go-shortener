@@ -25,7 +25,7 @@ func addNew(c *gin.Context) {
 
 	c.Header("Content-Type", "text/plain")
 
-	resURL := fmt.Sprintf("%s/%s", config.FlagSuffixAddr, short)
+	resURL := fmt.Sprintf("%s%s", config.FlagSuffixAddr, short)
 
 	c.Writer.WriteHeader(http.StatusCreated)
 	_, err = c.Writer.Write([]byte(resURL))
