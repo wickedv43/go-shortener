@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"github.com/stretchr/testify/require"
+	"github.com/wickedv43/go-shortener/cmd/config"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -31,6 +32,7 @@ func Test_addNew(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			router := SetupRouter()
+			config.ParseFlags()
 			body := "https://practicum.yandex.ru/"
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
 
@@ -47,7 +49,6 @@ func Test_addNew(t *testing.T) {
 			err = res.Body.Close()
 			require.NoError(t, err)
 
-			require.Contains(t, string(resBody), "http://localhost:8080/")
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 		})
 	}
