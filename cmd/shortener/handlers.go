@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/wickedv43/go-shortener/cmd/config"
 	"io"
 	"log"
 	"net/http"
@@ -24,7 +25,7 @@ func addNew(c *gin.Context) {
 
 	c.Header("Content-Type", "text/plain")
 
-	resURL := "http://localhost:8080/" + short
+	resURL := config.FlagSuffixAddr + short
 
 	c.Writer.WriteHeader(http.StatusCreated)
 	_, err = c.Writer.Write([]byte(resURL))
