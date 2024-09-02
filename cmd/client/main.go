@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// task post
+// common post for test
 func main() {
 	client := &http.Client{}
 
