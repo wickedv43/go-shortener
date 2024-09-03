@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wickedv43/go-shortener/cmd/config"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -15,13 +14,17 @@ func addNew(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
+	if len(url) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "url is empty"})
+	}
+
 	ok, short := S.InStorage(string(url))
 	if !ok {
 		short = Shorting()
 		S.Save(string(url), short)
 	}
 
-	log.Println(string(url), short)
+	//logrus.Info(short)
 
 	c.Header("Content-Type", "text/plain")
 
@@ -39,7 +42,7 @@ func getShort(c *gin.Context) {
 	short := c.Param("short")
 
 	respURL, ok := S.Get(short)
-	fmt.Println(respURL, short)
+
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
 	}

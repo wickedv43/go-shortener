@@ -2,14 +2,17 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/cmd/config"
-	"log"
+	"github.com/wickedv43/go-shortener/internal/logger"
 )
 
 func main() {
 	config.ParseFlags()
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery(), logger.Logger())
+
 	S.Init()
 
 	r.POST(`/`, addNew)
@@ -17,6 +20,6 @@ func main() {
 
 	err := r.Run(config.FlagRunAddr)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
