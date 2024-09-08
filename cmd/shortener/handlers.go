@@ -1,31 +1,30 @@
-package main
+package server
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wickedv43/go-shortener/cmd/config"
 	"io"
 	"log"
 	"net/http"
 )
 
-func addNew(c *gin.Context) {
+func (s *Server) addNew(c *gin.Context) {
 	url, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	ok, short := S.InStorage(string(url))
+	ok, short := s.storage.InStorage(string(url))
 	if !ok {
 		short = Shorting()
-		S.Save(string(url), short)
+		s.storage.Put(string(url), short)
 	}
 
 	log.Println(string(url), short)
 
 	c.Header("Content-Type", "text/plain")
 
-	resURL := fmt.Sprintf("%s/%s", config.FlagSuffixAddr, short)
+	resURL := fmt.Sprintf("%s/%s", s.cfg.FlagSuffixAddr, short)
 
 	c.Writer.WriteHeader(http.StatusCreated)
 	_, err = c.Writer.Write([]byte(resURL))
@@ -35,10 +34,10 @@ func addNew(c *gin.Context) {
 
 }
 
-func getShort(c *gin.Context) {
+func (s *Server) getShort(c *gin.Context) {
 	short := c.Param("short")
 
-	respURL, ok := S.Get(short)
+	respURL, ok := s.storage.Get(short)
 	fmt.Println(respURL, short)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})

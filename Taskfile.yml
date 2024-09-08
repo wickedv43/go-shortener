@@ -2,6 +2,6 @@ version: '3'
 
 tasks:
   server:
-    go run ./cmd/shortener/.
+    go run ./cmd/backend/.
   post:
     go run ./cmd/client/.
