@@ -17,6 +17,7 @@ type Server struct {
 
 func NewServer(i do.Injector) (*Server, error) {
 	cfg := do.MustInvoke[*config.Config](i)
+	stor := do.MustInvoke[*storage.Storage](i)
 
 	server, err := do.InvokeStruct[Server](i)
 	if err != nil {
@@ -28,6 +29,7 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	server.engine = e
 	server.cfg = cfg
+	server.storage = stor
 
 	server.engine.POST(`/`, server.addNew)
 	server.engine.GET(`/:short`, server.getShort)
