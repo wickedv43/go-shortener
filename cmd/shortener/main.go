@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/samber/do/v2"
 	"github.com/wickedv43/go-shortener/cmd/config"
+	"github.com/wickedv43/go-shortener/cmd/logger"
 	"github.com/wickedv43/go-shortener/cmd/server"
 	"github.com/wickedv43/go-shortener/cmd/storage"
 	"os"
@@ -16,6 +17,10 @@ func main() {
 	do.Provide(i, server.NewServer)
 	do.Provide(i, config.NewConfig)
 	do.Provide(i, storage.NewStorage)
+	do.Provide(i, logger.NewLogger)
+
+	log := do.MustInvoke[*logger.Logger](i)
+	log.Println("starting server")
 
 	do.MustInvoke[*server.Server](i).Start()
 
