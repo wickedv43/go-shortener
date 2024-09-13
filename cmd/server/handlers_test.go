@@ -5,6 +5,7 @@ import (
 	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/wickedv43/go-shortener/cmd/config"
+	"github.com/wickedv43/go-shortener/cmd/logger"
 	"github.com/wickedv43/go-shortener/cmd/storage"
 	"io"
 	"net/http"
@@ -18,6 +19,7 @@ func init() {
 	do.Provide(i, NewServer)
 	do.Provide(i, config.NewConfig)
 	do.Provide(i, storage.NewStorage)
+	do.Provide(i, logger.NewLogger)
 }
 
 // Test for "/"
