@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -20,11 +19,9 @@ func (s *Server) addNew(c *gin.Context) {
 		s.storage.Put(string(url), short)
 	}
 
-	log.Println(string(url), short)
-
 	c.Header("Content-Type", "text/plain")
 
-	resURL := fmt.Sprintf("%s/%s", s.cfg.FlagSuffixAddr, short)
+	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 	c.Writer.WriteHeader(http.StatusCreated)
 	_, err = c.Writer.Write([]byte(resURL))
