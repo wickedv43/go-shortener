@@ -38,7 +38,6 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	server.engine.POST(`/`, server.addNew)
 	server.engine.POST(`/api/shorten`, server.addNewJSON)
-	server.engine.GET(`/api/shorten`, server.getShortJSON)
 	server.engine.GET(`/:short`, server.getShort)
 
 	return server, nil

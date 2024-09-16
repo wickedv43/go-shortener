@@ -73,23 +73,5 @@ func (s *Server) addNewJSON(c *gin.Context) {
 	var res Result
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
-	response, err := json.Marshal(res)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	c.JSON(http.StatusCreated, response)
-}
-
-func (s *Server) getShortJSON(c *gin.Context) {
-	short := c.Param("short")
-
-	respURL, ok := s.storage.Get(short)
-	fmt.Println(respURL, short)
-	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
-	}
-
-	c.Header("Location", respURL)
-	c.Writer.WriteHeader(http.StatusTemporaryRedirect)
+	c.JSON(http.StatusCreated, res)
 }
