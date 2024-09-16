@@ -130,7 +130,7 @@ func Test_addNewJSON(t *testing.T) {
 			name: "positive test #1",
 			want: want{
 				code:        http.StatusCreated,
-				contentType: "application/json",
+				contentType: "application/json; charset=utf-8",
 			},
 		},
 	}
