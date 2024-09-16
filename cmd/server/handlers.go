@@ -12,10 +12,6 @@ type Expand struct {
 	URL string `json:"url"`
 }
 
-type Short struct {
-	short string `json:"short"`
-}
-
 type Result struct {
 	Result string `json:"result"`
 }
