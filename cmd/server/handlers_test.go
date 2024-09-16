@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/wickedv43/go-shortener/cmd/config"
@@ -109,6 +110,52 @@ func Test_getShort(t *testing.T) {
 
 			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, url, res.Header.Get("Location"))
+		})
+	}
+}
+
+func Test_addNewJSON(t *testing.T) {
+	var srv = do.MustInvoke[*Server](i)
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #1",
+			want: want{
+				code:        http.StatusCreated,
+				contentType: "application/json",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var r URL
+			r.URL = "https://practicum.yandex.ru/"
+
+			body, err := json.Marshal(r)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
+
+			w := httptest.NewRecorder()
+
+			srv.engine.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			err = res.Body.Close()
+			require.NoError(t, err)
+
+			require.Equal(t, test.want.code, res.StatusCode)
+			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+
 		})
 	}
 }
