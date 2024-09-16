@@ -136,7 +136,7 @@ func Test_addNewJSON(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var r URL
+			var r Expand
 			r.URL = "https://practicum.yandex.ru/"
 
 			body, err := json.Marshal(r)

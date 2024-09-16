@@ -8,8 +8,12 @@ import (
 	"net/http"
 )
 
-type URL struct {
+type Expand struct {
 	URL string `json:"url"`
+}
+
+type Short struct {
+	short string `json:"short"`
 }
 
 type Result struct {
@@ -44,7 +48,6 @@ func (s *Server) getShort(c *gin.Context) {
 	short := c.Param("short")
 
 	respURL, ok := s.storage.Get(short)
-	fmt.Println(respURL, short)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
 	}
@@ -54,7 +57,7 @@ func (s *Server) getShort(c *gin.Context) {
 }
 
 func (s *Server) addNewJSON(c *gin.Context) {
-	var url URL
+	var url Expand
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -71,8 +74,6 @@ func (s *Server) addNewJSON(c *gin.Context) {
 		s.storage.Put(url.URL, short)
 	}
 
-	c.Header("Content-Type", "application/json")
-
 	var res Result
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
@@ -82,4 +83,17 @@ func (s *Server) addNewJSON(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+func (s *Server) getShortJSON(c *gin.Context) {
+	short := c.Param("short")
+
+	respURL, ok := s.storage.Get(short)
+	fmt.Println(respURL, short)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
+	}
+
+	c.Header("Location", respURL)
+	c.Writer.WriteHeader(http.StatusTemporaryRedirect)
 }
