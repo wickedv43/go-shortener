@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,13 +34,13 @@ func main() {
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewReader(body))
+	req, err := http.NewRequest("GET", "http://localhost:8080/LXDyZznq", bytes.NewReader(body))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept-Encoding", "gzip")
+	//req.Header.Set("Content-Type", "application/json")
+	//req.Header.Add("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -47,12 +48,12 @@ func main() {
 	}
 
 	//gzip reader
-	//bodyGZIP, err := gzip.NewReader(res.Body)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
+	bodyGZIP, err := gzip.NewReader(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	rBody, err := io.ReadAll(res.Body)
+	rBody, err := io.ReadAll(bodyGZIP)
 	_ = json.Unmarshal(rBody, &rs)
 	if err != nil {
 		fmt.Println(err)
@@ -60,6 +61,7 @@ func main() {
 	defer res.Body.Close()
 
 	fmt.Println(rs)
-	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"))
+	fmt.Println()
+	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"), res.Header.Get("Location"))
 
 }

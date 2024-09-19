@@ -17,6 +17,12 @@ type Result struct {
 }
 
 func (s *Server) addNew(c *gin.Context) {
+	//
+	if c.Request.Header.Get("Content-Type") == "application/json" {
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+
 	url, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
