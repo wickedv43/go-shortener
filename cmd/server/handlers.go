@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/wickedv43/go-shortener/cmd/storage"
 	"io"
 	"net/http"
 )
@@ -23,15 +24,19 @@ func (s *Server) addNew(c *gin.Context) {
 		return
 	}
 
+	var d storage.Data
+
 	url, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	ok, short := s.storage.InStorage(string(url))
+	short, ok := s.storage.InStorage(string(url))
 	if !ok {
 		short = Shorting()
-		s.storage.Put(string(url), short)
+		d.OriginalURL = string(url)
+		d.ShortURL = short
+		s.storage.Put(d)
 	}
 
 	c.Header("Content-Type", "text/plain")
@@ -70,10 +75,13 @@ func (s *Server) addNewJSON(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	ok, short := s.storage.InStorage(url.URL)
+	var d storage.Data
+	short, ok := s.storage.InStorage(url.URL)
 	if !ok {
 		short = Shorting()
-		s.storage.Put(url.URL, short)
+		d.OriginalURL = url.URL
+		d.ShortURL = short
+		s.storage.Put(d)
 	}
 
 	var res Result

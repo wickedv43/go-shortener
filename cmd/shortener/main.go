@@ -19,9 +19,7 @@ func main() {
 	do.Provide(i, storage.NewStorage)
 	do.Provide(i, logger.NewLogger)
 
-	log := do.MustInvoke[*logger.Logger](i)
-	log.Println("starting server")
-
+	do.MustInvoke[*logger.Logger](i)
 	do.MustInvoke[*server.Server](i).Start()
 
 	i.ShutdownOnSignals(syscall.SIGTERM, os.Interrupt)

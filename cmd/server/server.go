@@ -8,7 +8,6 @@ import (
 	"github.com/wickedv43/go-shortener/cmd/config"
 	"github.com/wickedv43/go-shortener/cmd/logger"
 	"github.com/wickedv43/go-shortener/cmd/storage"
-	"log"
 )
 
 type Server struct {
@@ -40,12 +39,19 @@ func NewServer(i do.Injector) (*Server, error) {
 	server.engine.POST(`/api/shorten`, server.addNewJSON)
 	server.engine.GET(`/:short`, server.getShort)
 
+	_ = server.storage.Load()
+
 	return server, nil
 }
 
 func (s *Server) Start() {
+	s.logger.Info("server started")
 	err := s.engine.Run(s.cfg.Server.FlagRunAddr)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "start server"))
+		s.logger.Fatal(errors.Wrap(err, "start server"))
 	}
+}
+
+func (s *Server) Shutdown() {
+	s.logger.Info("server stopped")
 }
