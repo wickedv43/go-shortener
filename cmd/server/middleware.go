@@ -1,7 +1,6 @@
 package server
 
 import (
-	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -43,15 +42,11 @@ func (s *Server) gzipMiddleware() gin.HandlerFunc {
 		acceptEncoding := c.Request.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
 		if supportsGzip {
-			gz, err := gzip.NewWriterLevel(c.Writer, gzip.BestSpeed)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			}
+			gz := newCompressWriter(c)
+
 			defer gz.Close()
 
-			c.Header("Content-Encoding", "gzip")
-
-			c.Writer = &gzipWriter{c.Writer, gz}
+			c.Writer = gz
 		}
 
 		contentEncoding := c.Request.Header.Get("Content-Encoding")
@@ -62,12 +57,11 @@ func (s *Server) gzipMiddleware() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
-			// меняем тело запроса на новое
+
 			c.Request.Body = decompresedBody
 			defer decompresedBody.Close()
 		}
 
-		// передаём управление хендлеру
 		c.Next()
 	}
 }
