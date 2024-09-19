@@ -39,11 +39,18 @@ func main() {
 		fmt.Println(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	//gzip reader
+	//bodyGZIP, err := gzip.NewReader(res.Body)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 
 	rBody, err := io.ReadAll(res.Body)
 	_ = json.Unmarshal(rBody, &rs)
@@ -53,5 +60,6 @@ func main() {
 	defer res.Body.Close()
 
 	fmt.Println(rs)
+	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"))
 
 }
