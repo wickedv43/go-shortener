@@ -1,10 +1,8 @@
 package server
 
 import (
-	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -39,35 +37,39 @@ func (s *Server) logHandler() gin.HandlerFunc {
 	}
 }
 
-type gzipWriter struct {
-	gin.ResponseWriter
-	Writer io.Writer
-}
-
-func (w gzipWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
-}
-
-func (s *Server) gzipHandler() gin.HandlerFunc {
+func (s Server) gzipMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
-			c.Next()
-			return
+
+		ow := c.Writer
+
+		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
+		acceptEncoding := c.Request.Header.Get("Accept-Encoding")
+		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		if supportsGzip {
+			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
+			cw := newGZIPWriter(c)
+			// меняем оригинальный http.ResponseWriter на новый
+			ow = cw
+			// не забываем отправить клиенту все сжатые данные после завершения middleware
+			defer cw.Close()
 		}
 
-		if strings.Contains(c.Request.Header.Get("Content-Type"), "application/json") ||
-			strings.Contains(c.Request.Header.Get("Content-Type"), "text/html") {
-			gz, err := gzip.NewWriterLevel(c.Writer, gzip.BestSpeed)
+		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
+		contentEncoding := r.Header.Get("Content-Encoding")
+		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		if sendsGzip {
+			// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
+			cr, err := newCompressReader(r.Body)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
-			defer gz.Close()
-
-			c.Header("Content-Encoding", "gzip")
-
-			c.Writer = gzipWriter{c.Writer, gz}
+			// меняем тело запроса на новое
+			r.Body = cr
+			defer cr.Close()
 		}
 
-		c.Next()
+		// передаём управление хендлеру
+		h.ServeHTTP(ow, r)
 	}
 }
