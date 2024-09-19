@@ -1,6 +1,7 @@
 package server
 
 import (
+	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -37,39 +38,36 @@ func (s *Server) logHandler() gin.HandlerFunc {
 	}
 }
 
-func (s Server) gzipMiddleware() gin.HandlerFunc {
+func (s *Server) gzipMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		ow := c.Writer
-
-		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
 		acceptEncoding := c.Request.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
 		if supportsGzip {
-			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
-			cw := newGZIPWriter(c)
-			// меняем оригинальный http.ResponseWriter на новый
-			ow = cw
-			// не забываем отправить клиенту все сжатые данные после завершения middleware
-			defer cw.Close()
+			gz, err := gzip.NewWriterLevel(c.Writer, gzip.BestSpeed)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+			defer gz.Close()
+
+			c.Header("Content-Encoding", "gzip")
+
+			c.Writer = &gzipWriter{c.Writer, gz}
 		}
 
-		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
-		contentEncoding := r.Header.Get("Content-Encoding")
+		contentEncoding := c.Request.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
 		if sendsGzip {
-			// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
-			cr, err := newCompressReader(r.Body)
+			decompresedBody, err := newCompressReader(c.Request.Body)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 			// меняем тело запроса на новое
-			r.Body = cr
-			defer cr.Close()
+			c.Request.Body = decompresedBody
+			defer decompresedBody.Close()
 		}
 
 		// передаём управление хендлеру
-		h.ServeHTTP(ow, r)
+		c.Next()
 	}
 }

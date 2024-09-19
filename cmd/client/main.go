@@ -34,13 +34,13 @@ func main() {
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("GET", "http://localhost:8080/LXDyZznq", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewReader(body))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
 	}
-	//req.Header.Set("Content-Type", "application/json")
-	//req.Header.Add("Accept-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
 	if err != nil {

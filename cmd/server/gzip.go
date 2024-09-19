@@ -4,41 +4,17 @@ import (
 	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"io"
-	"net/http"
 )
 
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
 // сжимать передаваемые данные и выставлять правильные HTTP-заголовки
 type gzipWriter struct {
-	w gin.ResponseWriter
-	io.Writer
+	gin.ResponseWriter
+	Writer io.Writer
 }
 
-func newGZIPWriter(c *gin.Context) *gzipWriter {
-	return &gzipWriter{
-		w:  c.Writer,
-		zw: gzip.NewWriter(c.Writer),
-	}
-}
-
-func (g *gzipWriter) Header() http.Header {
-	return g.w.Header()
-}
-
-func (g *gzipWriter) Write(p []byte) (int, error) {
-	return g.zw.Write(p)
-}
-
-func (g *gzipWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
-		g.w.Header().Set("Content-Encoding", "gzip")
-	}
-	g.w.WriteHeader(statusCode)
-}
-
-// Close закрывает gzip.Writer и досылает все данные из буфера.
-func (g *gzipWriter) Close() error {
-	return g.zw.Close()
+func (g *gzipWriter) Write(b []byte) (int, error) {
+	return g.Writer.Write(b)
 }
 
 // compressReader реализует интерфейс io.ReadCloser и позволяет прозрачно для сервера
@@ -48,7 +24,7 @@ type gzipReader struct {
 	zr *gzip.Reader
 }
 
-func newGZIPReader(r io.ReadCloser) (*gzipReader, error) {
+func newCompressReader(r io.ReadCloser) (*gzipReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
