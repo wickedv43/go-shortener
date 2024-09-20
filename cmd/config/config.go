@@ -31,7 +31,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 	var cfg Config
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
-	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./storage/recovery/", "path to database file")
+	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./cmd/shortener/db/db", "path to database file")
 
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
 	if ServerAddr != "" {
@@ -45,7 +45,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 
 	FileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 	if FileStoragePath != "" {
-
+		cfg.Server.FlagStoragePath = FileStoragePath
 	}
 
 	cfg.Logger.Lvl = logrus.InfoLevel

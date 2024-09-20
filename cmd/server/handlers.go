@@ -64,7 +64,11 @@ func (s *Server) getShort(c *gin.Context) {
 }
 
 func (s *Server) addNewJSON(c *gin.Context) {
-	var url Expand
+	var (
+		url Expand
+		res Result
+	)
+
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -84,7 +88,6 @@ func (s *Server) addNewJSON(c *gin.Context) {
 		s.storage.Put(d)
 	}
 
-	var res Result
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 	c.JSON(http.StatusCreated, res)

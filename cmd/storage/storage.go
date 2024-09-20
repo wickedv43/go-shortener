@@ -9,9 +9,8 @@ import (
 	"github.com/wickedv43/go-shortener/cmd/config"
 	"github.com/wickedv43/go-shortener/cmd/logger"
 	"os"
+	"strings"
 )
-
-const dbfilename = "db.json"
 
 type Data struct {
 	UUID        int    `json:"uuid"`
@@ -20,9 +19,9 @@ type Data struct {
 }
 
 type Storage struct {
-	db     []Data
-	logger *logrus.Entry
-	cfg    *config.Config
+	db  []Data
+	log *logrus.Entry
+	cfg *config.Config
 }
 
 func NewStorage(i do.Injector) (*Storage, error) {
@@ -37,23 +36,23 @@ func NewStorage(i do.Injector) (*Storage, error) {
 	db := make([]Data, 0, 0)
 
 	storage.db = db
-	storage.logger = log
+	storage.log = log
 	storage.cfg = cfg
 
 	return storage, err
 }
 
-func (s *Storage) Save() error {
-	file, err := os.OpenFile(dbfilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+func (s *Storage) Save(d Data) error {
+	file, err := os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 
 	if err != nil {
 		return errors.Wrap(err, "open file")
 	}
 	defer file.Close()
 
-	s.logger.Infof("saving data to: %s", dbfilename)
+	s.log.Infof("saving data to: %s", s.cfg.Server.FlagStoragePath)
 
-	data, err := json.MarshalIndent(s.db, "", "   ")
+	data, err := json.Marshal(d)
 	if err != nil {
 		return errors.Wrap(err, "marshal data")
 	}
@@ -61,23 +60,38 @@ func (s *Storage) Save() error {
 	if err != nil {
 		return errors.Wrap(err, "write data")
 	}
+
+	_, err = file.Write([]byte("\n"))
+	if err != nil {
+		return errors.Wrap(err, "write data")
+	}
+
 	return nil
 }
 
-// TODO: create normal Load() func for db, repair db. :S
+// Load() - load data from file.json by default
 func (s *Storage) Load() error {
-	data, err := os.ReadFile(dbfilename)
+	var bd []byte
+
+	file, err := os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDONLY, 0666)
 	if err != nil {
 		return errors.Wrap(err, "read file")
 	}
+	defer file.Close()
 
-	if err = json.Unmarshal(data, &s.db); err != nil {
-		return errors.Wrap(err, "unmarshal data")
+	file.Read(bd)
+
+	data := strings.Split(string(bd), "\n")
+
+	for _, sd := range data {
+		var d Data
+		if err = json.Unmarshal([]byte(sd), &d); err != nil {
+			return errors.Wrap(err, "unmarshal file")
+		}
+		s.db = append(s.db, d)
 	}
 
-	fmt.Println(s.db)
-
-	s.logger.Infof("loaded db from: %s", dbfilename)
+	fmt.Println("asdasd")
 
 	return nil
 }

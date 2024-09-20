@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// uuidCounter() - for uuid count Data
 func (s *Storage) uuidCounter() int {
 	counter := 1
 	for _, d := range s.db {
@@ -15,21 +16,23 @@ func (s *Storage) uuidCounter() int {
 	return counter
 }
 
+// Put(d Data) - saves Data in local memory and file
 func (s *Storage) Put(d Data) {
 	d.UUID = s.uuidCounter()
 	s.db = append(s.db, d)
 
-	err := s.Save()
+	err := s.Save(d)
 	if err != nil {
-		s.logger.Fatal(errors.Wrap(err, "save storage"))
+		s.log.Fatal(errors.Wrap(err, "save storage"))
 	}
 
-	s.logger.WithFields(logrus.Fields{
+	s.log.WithFields(logrus.Fields{
 		"url":   d.OriginalURL,
 		"short": d.ShortURL,
 	}).Infoln("saved")
 }
 
+// Get(short string) - get data from local memory
 func (s *Storage) Get(short string) (string, bool) {
 	var url string
 
@@ -43,6 +46,7 @@ func (s *Storage) Get(short string) (string, bool) {
 	return url, false
 }
 
+// InStorage(url string) - check if extended url is already in the database
 func (s *Storage) InStorage(url string) (string, bool) {
 	var short string
 
