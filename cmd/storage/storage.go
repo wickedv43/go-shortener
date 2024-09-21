@@ -33,7 +33,7 @@ func NewStorage(i do.Injector) (*Storage, error) {
 		return nil, errors.Wrap(err, "invoke struct")
 	}
 
-	db := make([]Data, 0, 0)
+	db := make([]Data, 0)
 
 	storage.db = db
 	storage.log = log
