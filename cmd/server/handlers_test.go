@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/wickedv43/go-shortener/cmd/config"
@@ -11,6 +12,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -64,7 +68,6 @@ func Test_addNew(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
-
 		})
 
 	}
@@ -93,9 +96,13 @@ func Test_getShort(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			var d storage.Data
 			url := "https://practicum.yandex.ru/"
 			short := Shorting()
-			srv.storage.Put(url, short)
+
+			d.OriginalURL = url
+			d.ShortURL = short
+			srv.storage.Put(d)
 
 			req := httptest.NewRequest(http.MethodGet, "/"+short, nil)
 
@@ -110,6 +117,7 @@ func Test_getShort(t *testing.T) {
 
 			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, url, res.Header.Get("Location"))
+
 		})
 	}
 }
@@ -155,6 +163,16 @@ func Test_addNewJSON(t *testing.T) {
 
 			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+
+			os.Remove(srv.cfg.Server.FlagStoragePath)
+			filePath, _ := filepath.Split(srv.cfg.Server.FlagStoragePath)
+			path := strings.Split(filePath, "/")
+			fmt.Println(path)
+			for j := len(path); j <= 0; j-- {
+				p := strings.Join(path[0:j-1], "/")
+				fmt.Println(p)
+				os.Remove("./" + p)
+			}
 
 		})
 	}

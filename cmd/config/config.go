@@ -31,7 +31,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 	var cfg Config
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
-	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./cmd/shortener/db/db", "path to database file")
+	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
 	if ServerAddr != "" {

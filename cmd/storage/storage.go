@@ -2,13 +2,13 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/cmd/config"
 	"github.com/wickedv43/go-shortener/cmd/logger"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -43,6 +43,11 @@ func NewStorage(i do.Injector) (*Storage, error) {
 }
 
 func (s *Storage) Save(d Data) error {
+
+	filePath, _ := filepath.Split(s.cfg.Server.FlagStoragePath)
+
+	_ = os.MkdirAll(filePath, 0755)
+
 	file, err := os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 
 	if err != nil {
@@ -73,25 +78,30 @@ func (s *Storage) Save(d Data) error {
 func (s *Storage) Load() error {
 	var bd []byte
 
+	filePath, _ := filepath.Split(s.cfg.Server.FlagStoragePath)
+
+	_ = os.MkdirAll(filePath, 0755)
+
 	file, err := os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDONLY, 0666)
 	if err != nil {
-		return errors.Wrap(err, "read file")
+		return errors.Wrap(err, "open file")
 	}
 	defer file.Close()
 
-	file.Read(bd)
+	_, err = file.Read(bd)
+	if err != nil {
+		return errors.Wrap(err, "read file")
+	}
 
 	data := strings.Split(string(bd), "\n")
 
 	for _, sd := range data {
 		var d Data
 		if err = json.Unmarshal([]byte(sd), &d); err != nil {
-			return errors.Wrap(err, "unmarshal file")
+			return errors.Wrap(err, "unmarshal data")
 		}
 		s.db = append(s.db, d)
 	}
-
-	fmt.Println("asdasd")
 
 	return nil
 }
