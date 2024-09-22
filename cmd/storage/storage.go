@@ -47,7 +47,7 @@ func NewStorage(i do.Injector) (*Storage, error) {
 	_ = os.MkdirAll(filePath, 0755)
 
 	// create db file
-	file, err := os.OpenFile(storage.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(storage.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, errors.Wrap(err, "create file")
 	}
