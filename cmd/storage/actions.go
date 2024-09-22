@@ -21,15 +21,16 @@ func (s *Storage) Put(d Data) {
 	d.UUID = s.uuidCounter()
 	s.db = append(s.db, d)
 
-	err := s.Save(d)
+	err := s.SaveInFile(d)
 	if err != nil {
-		s.log.Fatal(errors.Wrap(err, "save storage"))
+		s.log.Fatal(errors.Wrap(err, "save in file"))
 	}
+	defer s.Close()
 
 	s.log.WithFields(logrus.Fields{
 		"url":   d.OriginalURL,
 		"short": d.ShortURL,
-	}).Infoln("saved")
+	}).Infoln("saved to locMem")
 }
 
 // Get(short string) - get data from local memory

@@ -27,7 +27,7 @@ func main() {
 
 	var r Request
 
-	r.URL = "https://practicum.yandex.ru/3222"
+	r.URL = "https://practicum.yandex.ru/32212"
 	body, err := json.Marshal(r)
 	if err != nil {
 		fmt.Println(err)

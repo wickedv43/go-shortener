@@ -39,19 +39,15 @@ func NewServer(i do.Injector) (*Server, error) {
 	server.engine.POST(`/api/shorten`, server.addNewJSON)
 	server.engine.GET(`/:short`, server.getShort)
 
-	_ = server.storage.Load()
-
 	return server, nil
 }
 
 func (s *Server) Start() {
+	_ = s.storage.LoadFromFile()
+
 	s.logger.Info("server started")
 	err := s.engine.Run(s.cfg.Server.FlagRunAddr)
 	if err != nil {
 		s.logger.Fatal(errors.Wrap(err, "start server"))
 	}
-}
-
-func (s *Server) Shutdown() {
-	s.logger.Info("server stopped")
 }

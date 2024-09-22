@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/wickedv43/go-shortener/cmd/config"
@@ -13,8 +12,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -30,6 +27,8 @@ func init() {
 // Test for "/"
 func Test_addNew(t *testing.T) {
 	var srv = do.MustInvoke[*Server](i)
+	err := srv.storage.LoadFromFile()
+	require.NoError(t, err)
 
 	type want struct {
 		code        int
@@ -50,7 +49,6 @@ func Test_addNew(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			body := "https://practicum.yandex.ru/"
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
 
@@ -76,6 +74,8 @@ func Test_addNew(t *testing.T) {
 // Test for "/:short"
 func Test_getShort(t *testing.T) {
 	var srv = do.MustInvoke[*Server](i)
+	err := srv.storage.LoadFromFile()
+	require.NoError(t, err)
 
 	type want struct {
 		code        int
@@ -124,6 +124,8 @@ func Test_getShort(t *testing.T) {
 
 func Test_addNewJSON(t *testing.T) {
 	var srv = do.MustInvoke[*Server](i)
+	err := srv.storage.LoadFromFile()
+	require.NoError(t, err)
 
 	type want struct {
 		code        int
@@ -165,14 +167,6 @@ func Test_addNewJSON(t *testing.T) {
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 
 			os.Remove(srv.cfg.Server.FlagStoragePath)
-			filePath, _ := filepath.Split(srv.cfg.Server.FlagStoragePath)
-			path := strings.Split(filePath, "/")
-			fmt.Println(path)
-			for j := len(path); j <= 0; j-- {
-				p := strings.Join(path[0:j-1], "/")
-				fmt.Println(p)
-				os.Remove("./" + p)
-			}
 
 		})
 	}
