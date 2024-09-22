@@ -25,7 +25,6 @@ func (s *Storage) Put(d Data) {
 	if err != nil {
 		s.log.Fatal(errors.Wrap(err, "save in file"))
 	}
-	defer s.Close()
 
 	s.log.WithFields(logrus.Fields{
 		"url":   d.OriginalURL,

@@ -43,10 +43,13 @@ func NewServer(i do.Injector) (*Server, error) {
 }
 
 func (s *Server) Start() {
-	_ = s.storage.LoadFromFile()
+	err := s.storage.LoadFromFile()
+	if err != nil {
+		s.logger.Fatal(errors.Wrapf(err, "load file: %s", s.cfg.Server.FlagStoragePath))
+	}
 
 	s.logger.Info("server started")
-	err := s.engine.Run(s.cfg.Server.FlagRunAddr)
+	err = s.engine.Run(s.cfg.Server.FlagRunAddr)
 	if err != nil {
 		s.logger.Fatal(errors.Wrap(err, "start server"))
 	}
