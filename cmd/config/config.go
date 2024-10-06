@@ -27,7 +27,7 @@ type Logger struct {
 	Lvl logrus.Level
 }
 
-func NewConfig(i do.Injector) (*Config, error) {
+func NewConfig(_ do.Injector) (*Config, error) {
 	var cfg Config
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
