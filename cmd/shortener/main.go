@@ -1,13 +1,15 @@
 package main
 
 import (
-	"github.com/samber/do/v2"
+	"os"
+	"syscall"
+
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/server"
 	"github.com/wickedv43/go-shortener/internal/storage"
-	"os"
-	"syscall"
+
+	"github.com/samber/do/v2"
 )
 
 func main() {

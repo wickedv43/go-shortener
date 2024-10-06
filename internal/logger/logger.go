@@ -1,9 +1,10 @@
 package logger
 
 import (
+	"github.com/wickedv43/go-shortener/internal/config"
+
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/wickedv43/go-shortener/internal/config"
 )
 
 type Logger struct {

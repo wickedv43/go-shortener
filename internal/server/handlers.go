@@ -3,10 +3,12 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
+
+	"github.com/wickedv43/go-shortener/internal/storage"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Expand struct {

@@ -3,10 +3,11 @@ package server
 import (
 	"bufio"
 	"compress/gzip"
-	"github.com/gin-gonic/gin"
 	"io"
 	"net"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // w - gin

@@ -3,16 +3,18 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/samber/do/v2"
-	"github.com/stretchr/testify/require"
-	"github.com/wickedv43/go-shortener/internal/config"
-	"github.com/wickedv43/go-shortener/internal/logger"
-	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/logger"
+	"github.com/wickedv43/go-shortener/internal/storage"
+
+	"github.com/samber/do/v2"
+	"github.com/stretchr/testify/require"
 )
 
 var i = do.New()

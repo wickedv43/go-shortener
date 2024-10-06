@@ -2,9 +2,10 @@ package config
 
 import (
 	"flag"
+	"os"
+
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 type Config struct {
