@@ -55,7 +55,7 @@ func (g *gzipWriter) Size() int {
 }
 
 func (g *gzipWriter) WriteString(s string) (int, error) {
-	return g.w.WriteString(s)
+	return g.w.Write([]byte(s))
 }
 
 func (g *gzipWriter) Written() bool {

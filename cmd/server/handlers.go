@@ -44,7 +44,8 @@ func (s *Server) addNew(c *gin.Context) {
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 	c.Writer.WriteHeader(http.StatusCreated)
-	_, err = c.Writer.WriteString(resURL)
+
+	_, err = c.Writer.Write([]byte(resURL))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
