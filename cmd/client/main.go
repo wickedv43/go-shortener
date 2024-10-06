@@ -27,19 +27,19 @@ func main() {
 
 	var r Request
 
-	r.URL = "https://practicum.yandex.ru/3212342"
-	body, err := json.Marshal(r)
+	bidy := "https://practicum.yandex.ru/3212342"
+	_, err := json.Marshal(r)
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader([]byte(bidy)))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "text/plain")
 	req.Header.Add("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
