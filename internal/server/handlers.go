@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wickedv43/go-shortener/cmd/storage"
+	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
 )

@@ -6,8 +6,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/wickedv43/go-shortener/cmd/config"
-	"github.com/wickedv43/go-shortener/cmd/logger"
+	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/logger"
 	"os"
 	"path/filepath"
 )
