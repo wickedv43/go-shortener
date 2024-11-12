@@ -117,7 +117,7 @@ func (s *Storage) LoadFromFile() error {
 	return nil
 }
 
-func (s *Storage) SaveToPostgres(d Data) error {
+func (s *Storage) saveToPostgres(d Data) error {
 	query := `INSERT INTO urls (uuid, short_url, original_url) VALUES ($1, $2, $3)`
 
 	_, err := s.pgDB.Exec(query, d.UUID, d.ShortURL, d.OriginalURL)
@@ -132,7 +132,7 @@ func (s *Storage) SaveToPostgres(d Data) error {
 	return nil
 }
 
-func (s *Storage) LoadFromPostgres() error {
+func (s *Storage) loadFromPostgres() error {
 	rows, err := s.pgDB.Query(`SELECT uuid, short_url, original_url FROM urls`)
 	if err != nil {
 		return errors.Wrap(err, "query from postgres")
@@ -158,7 +158,7 @@ func (s *Storage) LoadFromPostgres() error {
 
 func (s *Storage) Save(d Data) error {
 	if s.pgDB != nil {
-		return s.SaveToPostgres(d)
+		return s.saveToPostgres(d)
 	}
 	if s.file != nil {
 		return s.SaveInFile(d)
@@ -168,10 +168,24 @@ func (s *Storage) Save(d Data) error {
 }
 
 func (s *Storage) Load() error {
-	if s.pgDB != nil {
-		return s.LoadFromPostgres()
+	if s.isPostgresAvailable() {
+		return s.loadFromPostgres()
 	}
+
+	s.log.Info("Falling back to file storage")
 	return s.LoadFromFile()
+}
+
+func (s *Storage) isPostgresAvailable() bool {
+	if s.pgDB == nil {
+		return false
+	}
+	// Attempt to ping the database to check the connection
+	if err := s.pgDB.Ping(); err != nil {
+		s.log.Warn("Postgres connection not available:", err)
+		return false
+	}
+	return true
 }
 
 func (s *Storage) Close() error {
