@@ -95,3 +95,12 @@ func (s *Server) addNewJSON(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, res)
 }
+
+func (s *Server) ping(c *gin.Context) {
+	err := s.storage.Ping()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, nil)
+}

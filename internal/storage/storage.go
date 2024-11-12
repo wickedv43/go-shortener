@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -22,6 +23,7 @@ type Data struct {
 
 type Storage struct {
 	db      []Data
+	pgDB    *sql.DB
 	file    *os.File
 	log     *logrus.Entry
 	cfg     *config.Config
@@ -55,10 +57,21 @@ func NewStorage(i do.Injector) (*Storage, error) {
 	}
 	storage.file = file
 
+	// Initialize PostgreSQL connection
+	pgDB, err := sql.Open("postgres", storage.cfg.Server.FlagDatabaseDSN)
+	if err != nil {
+		return nil, errors.Wrap(err, "connect to postgres")
+	}
+	storage.pgDB = pgDB
+
 	// scanner for db file
 	storage.scanner = bufio.NewScanner(storage.file)
 
 	return storage, err
+}
+
+func (s *Storage) Ping() error {
+	return s.pgDB.Ping()
 }
 
 func (s *Storage) SaveInFile(d Data) error {

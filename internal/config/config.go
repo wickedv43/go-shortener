@@ -21,6 +21,7 @@ type Server struct {
 	FlagRunAddr     string
 	FlagSuffixAddr  string
 	FlagStoragePath string
+	FlagDatabaseDSN string
 }
 
 // Lvl - logs level
@@ -33,6 +34,7 @@ func NewConfig(_ do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
+	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "user user", "database connection string")
 
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
 	if ServerAddr != "" {
@@ -47,6 +49,11 @@ func NewConfig(_ do.Injector) (*Config, error) {
 	FileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 	if FileStoragePath != "" {
 		cfg.Server.FlagStoragePath = FileStoragePath
+	}
+
+	DatabaseDSN := os.Getenv("DATABASE_DSN")
+	if DatabaseDSN != "" {
+		cfg.Server.FlagDatabaseDSN = DatabaseDSN
 	}
 
 	cfg.Logger.Lvl = logrus.InfoLevel
