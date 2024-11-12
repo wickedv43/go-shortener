@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
+
+	_ "github.com/lib/pq"
 )
 
 type Data struct {
@@ -113,5 +115,13 @@ func (s *Storage) LoadFromFile() error {
 }
 
 func (s *Storage) Close() error {
-	return s.file.Close()
+	if s.file != nil {
+		if err := s.file.Close(); err != nil {
+			return errors.Wrap(err, "close file")
+		}
+	}
+	if s.pgDB != nil {
+		return s.pgDB.Close()
+	}
+	return nil
 }
