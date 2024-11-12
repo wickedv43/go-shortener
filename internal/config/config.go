@@ -1,0 +1,63 @@
+package config
+
+import (
+	"flag"
+	"os"
+
+	"github.com/samber/do/v2"
+	"github.com/sirupsen/logrus"
+)
+
+type Config struct {
+	Server Server
+	Logger Logger
+}
+
+// Server struct
+// FlagRunAddr - address and port to run server
+// FlagSuffixAddr - address before short url
+// FlagStoragePath - path to db recovery file
+type Server struct {
+	FlagRunAddr     string
+	FlagSuffixAddr  string
+	FlagStoragePath string
+	FlagDatabaseDSN string
+}
+
+// Lvl - logs level
+type Logger struct {
+	Lvl logrus.Level
+}
+
+func NewConfig(_ do.Injector) (*Config, error) {
+	var cfg Config
+	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
+	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
+	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
+	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
+
+	ServerAddr := os.Getenv("SERVER_ADDRESS")
+	if ServerAddr != "" {
+		cfg.Server.FlagRunAddr = ServerAddr
+	}
+
+	BaseURL := os.Getenv("BASE_URL")
+	if BaseURL != "" {
+		cfg.Server.FlagSuffixAddr = BaseURL
+	}
+
+	FileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+	if FileStoragePath != "" {
+		cfg.Server.FlagStoragePath = FileStoragePath
+	}
+
+	DatabaseDSN := os.Getenv("DATABASE_DSN")
+	if DatabaseDSN != "" {
+		cfg.Server.FlagDatabaseDSN = DatabaseDSN
+	}
+
+	cfg.Logger.Lvl = logrus.InfoLevel
+
+	flag.Parse()
+	return &cfg, nil
+}
