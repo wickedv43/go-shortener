@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // uuidCounter() - for uuid count Data
@@ -19,17 +18,11 @@ func (s *Storage) uuidCounter() int {
 // Put(d Data) - saves Data in local memory and file
 func (s *Storage) Put(d Data) {
 	d.UUID = s.uuidCounter()
-	s.db = append(s.db, d)
 
-	err := s.SaveInFile(d)
+	err := s.Save(d)
 	if err != nil {
-		s.log.Fatal(errors.Wrap(err, "save in file"))
+		s.log.Fatal(errors.Wrap(err, "save"))
 	}
-
-	s.log.WithFields(logrus.Fields{
-		"url":   d.OriginalURL,
-		"short": d.ShortURL,
-	}).Infoln("saved to locMem")
 }
 
 // Get(short string) - get data from local memory

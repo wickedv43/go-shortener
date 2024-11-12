@@ -88,7 +88,10 @@ func (s *Storage) SaveInFile(d Data) error {
 		return errors.Wrap(err, "write data")
 	}
 
-	s.log.Infof("saved to file: %s", s.cfg.Server.FlagStoragePath)
+	s.log.WithFields(logrus.Fields{
+		"url":   d.OriginalURL,
+		"short": d.ShortURL,
+	}).Infof("saved to file: %s", s.cfg.Server.FlagStoragePath)
 
 	return nil
 }
@@ -112,6 +115,62 @@ func (s *Storage) LoadFromFile() error {
 	s.log.Infof("moved %d links to locMem from: %s", dataCounter, s.cfg.Server.FlagStoragePath)
 
 	return nil
+}
+
+func (s *Storage) SaveToPostgres(d Data) error {
+	query := `INSERT INTO urls (uuid, short_url, original_url) VALUES ($1, $2, $3)`
+
+	_, err := s.pgDB.Exec(query, d.UUID, d.ShortURL, d.OriginalURL)
+	if err != nil {
+		return errors.Wrap(err, "save to postgres")
+	}
+
+	s.log.WithFields(logrus.Fields{
+		"url":   d.OriginalURL,
+		"short": d.ShortURL,
+	}).Infoln("saved to postgres")
+	return nil
+}
+
+func (s *Storage) LoadFromPostgres() error {
+	rows, err := s.pgDB.Query(`SELECT uuid, short_url, original_url FROM urls`)
+	if err != nil {
+		return errors.Wrap(err, "query from postgres")
+	}
+	defer rows.Close()
+
+	var dataCounter int
+	for rows.Next() {
+		var d Data
+		if err = rows.Scan(&d.UUID, &d.ShortURL, &d.OriginalURL); err != nil {
+			return errors.Wrap(err, "scan postgres row")
+		}
+		s.db = append(s.db, d)
+		dataCounter++
+	}
+	if err = rows.Err(); err != nil {
+		return errors.Wrap(err, "iterate postgres rows")
+	}
+
+	s.log.Infof("loaded %d links from postgres", dataCounter)
+	return nil
+}
+
+func (s *Storage) Save(d Data) error {
+	if s.pgDB != nil {
+		return s.SaveToPostgres(d)
+	} else if s.file != nil {
+		return s.SaveInFile(d)
+	}
+	s.db = append(s.db, d)
+	return nil
+}
+
+func (s *Storage) Load() error {
+	if s.pgDB != nil {
+		return s.LoadFromPostgres()
+	}
+	return s.LoadFromFile()
 }
 
 func (s *Storage) Close() error {
