@@ -160,11 +160,8 @@ func (s *Storage) Save(d Data) error {
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
 	}
-	if s.file != nil {
-		return s.SaveInFile(d)
-	}
 	s.db = append(s.db, d)
-	return nil
+	return s.SaveInFile(d)
 }
 
 func (s *Storage) Load() error {
