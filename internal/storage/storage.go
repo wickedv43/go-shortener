@@ -157,7 +157,7 @@ func (s *Storage) loadFromPostgres() error {
 }
 
 func (s *Storage) Save(d Data) error {
-	if s.pgDB != nil {
+	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
 	}
 	if s.file != nil {
