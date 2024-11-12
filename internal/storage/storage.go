@@ -133,8 +133,21 @@ func (s *Storage) saveToPostgres(d Data) error {
 }
 
 func (s *Storage) loadFromPostgres() error {
+	query := `
+    CREATE TABLE IF NOT EXISTS urls (
+        uuid SERIAL PRIMARY KEY,
+        short_url TEXT NOT NULL,
+        original_url TEXT NOT NULL
+    );`
+
+	_, err := s.pgDB.Exec(query)
+	if err != nil {
+		return errors.Wrap(err, "failed to create urls table")
+	}
+
 	rows, err := s.pgDB.Query(`SELECT uuid, short_url, original_url FROM urls`)
 	if err != nil {
+
 		return errors.Wrap(err, "query from postgres")
 	}
 	defer rows.Close()
@@ -182,6 +195,7 @@ func (s *Storage) isPostgresAvailable() bool {
 		s.log.Warn("Postgres connection not available:", err)
 		return false
 	}
+
 	return true
 }
 
