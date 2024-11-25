@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	// provide part
+
 	i := do.New()
 
 	do.Provide(i, server.NewServer)
