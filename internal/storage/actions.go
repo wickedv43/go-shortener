@@ -5,17 +5,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// uuidCounter() - for uuid count Data
-func (s *Storage) uuidCounter() int {
-	counter := 1
-	for _, d := range s.db {
-		if d.UUID >= counter {
-			counter = d.UUID + 1
-		}
-	}
-	return counter
-}
-
 // Put(d Data) - saves Data in local memory and file
 func (s *Storage) Put(d Data) {
 	d.UUID = uuid.New().ClockSequence()
