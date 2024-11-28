@@ -28,14 +28,11 @@ func main() {
 	var r Request
 
 	bidy := `[{
-        "correlation_id": "<с2>",
-        "original_url": "<https://practicum.yandex.ru>"
+        "correlation_id": "<33>",
+        "original_url": "<https://p2racticum.yandex.ru/learn>"
     },{
-        "correlation_id": "<1>",
-        "original_url": "<https://practicum.yandex.ru/learn>"
-    },{
-        "correlation_id": "<строк123ификатор>",
-        "original_url": "<https://practicum.yandex.ru/learn/go-advanced/courses/6e4a1d46-9b38-4936-93c4-62f9ec2db45a/sprints/366447/topics/f04453a3-f8c6-4b19-bb87-454f61520c4e/lessons/c5404109-dc98-4636-ae51-3c3d284b129f/>"
+        "correlation_id": "<икатор>",
+        "original_url": "<https://pra3cticum.yandex.ru/learn/go-advanced/courses/6e4a1d46-9b38-4936-93c4-62f9ec2db45a/sprints/366447/topics/f04453a3-f8c6-4b19-bb87-454f61520c4e/lessons/c5404109-dc98-4636-ae51-3c3d284b129f/>"
     }]`
 
 	_, err := json.Marshal(r)

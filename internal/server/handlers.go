@@ -129,7 +129,7 @@ func (s *Server) batch(c *gin.Context) {
 		reqs []batchRequest
 	)
 
-	res := make([]batchResponse, 0, 0)
+	res := make([]batchResponse, 0)
 
 	err := c.BindJSON(&reqs)
 	if err != nil {
