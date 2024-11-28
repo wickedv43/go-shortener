@@ -27,7 +27,7 @@ func main() {
 
 	var r Request
 
-	bidy := ` [{"correlation_id":"0effff22-edc7-44b4-b589-9f81af8154d9","original_url":"http://fadbeemhy.net/auxiw4yr2u"},{"correlation_id":"9140dd04-c420-4722-a5af-2f20c954c8b3","original_url":"http://dbytws.com/j3jkj0wwq0jl/n7bfb/lcowiqrqta"}]`
+	bidy := `[]`
 
 	_, err := json.Marshal(r)
 	if err != nil {

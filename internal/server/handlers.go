@@ -134,6 +134,12 @@ func (s *Server) batch(c *gin.Context) {
 	err := c.BindJSON(&reqs)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(reqs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "empty request"})
+		return
 	}
 
 	for _, req := range reqs {
