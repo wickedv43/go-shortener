@@ -118,7 +118,9 @@ func (s *Storage) LoadFromFile() error {
 }
 
 func (s *Storage) saveToPostgres(d Data) error {
-	query := `INSERT INTO urls (uuid, short_url, original_url) VALUES ($1, $2, $3)`
+	query := `INSERT INTO urls (uuid, short_url, original_url) 
+          VALUES ($1, $2, $3) 
+          ON CONFLICT (uuid) DO NOTHING`
 
 	_, err := s.pgDB.Exec(query, d.UUID, d.ShortURL, d.OriginalURL)
 	if err != nil {

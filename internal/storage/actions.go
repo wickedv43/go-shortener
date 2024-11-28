@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +18,7 @@ func (s *Storage) uuidCounter() int {
 
 // Put(d Data) - saves Data in local memory and file
 func (s *Storage) Put(d Data) {
-	d.UUID = s.uuidCounter()
+	d.UUID = uuid.New().ClockSequence()
 
 	err := s.Save(d)
 	if err != nil {
