@@ -146,5 +146,5 @@ func (s *Server) batch(c *gin.Context) {
 		res = append(res, r)
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusCreated, res)
 }

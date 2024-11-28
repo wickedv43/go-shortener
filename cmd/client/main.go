@@ -27,13 +27,7 @@ func main() {
 
 	var r Request
 
-	bidy := `[{
-        "correlation_id": "<33>",
-        "original_url": "<https://p2racticum.yandex.ru/learn>"
-    },{
-        "correlation_id": "<икатор>",
-        "original_url": "<https://pra3cticum.yandex.ru/learn/go-advanced/courses/6e4a1d46-9b38-4936-93c4-62f9ec2db45a/sprints/366447/topics/f04453a3-f8c6-4b19-bb87-454f61520c4e/lessons/c5404109-dc98-4636-ae51-3c3d284b129f/>"
-    }]`
+	bidy := ` [{"correlation_id":"0effff22-edc7-44b4-b589-9f81af8154d9","original_url":"http://fadbeemhy.net/auxiw4yr2u"},{"correlation_id":"9140dd04-c420-4722-a5af-2f20c954c8b3","original_url":"http://dbytws.com/j3jkj0wwq0jl/n7bfb/lcowiqrqta"}]`
 
 	_, err := json.Marshal(r)
 	if err != nil {
