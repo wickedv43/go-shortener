@@ -3,10 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
-
-	"github.com/wickedv43/go-shortener/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +17,16 @@ type Expand struct {
 
 type Result struct {
 	Result string `json:"result"`
+}
+
+type batchRequest struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type batchResponse struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 func (s *Server) addNew(c *gin.Context) {
@@ -82,18 +92,27 @@ func (s *Server) addNewJSON(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	var d storage.Data
-	short, ok := s.storage.InStorage(url.URL)
-	if !ok {
-		short = Shorting()
-		d.OriginalURL = url.URL
-		d.ShortURL = short
-		s.storage.Put(d)
-	}
+	short := s.save(url.URL)
 
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 	c.JSON(http.StatusCreated, res)
+}
+
+func (s *Server) save(url string) string {
+	var d storage.Data
+	short, ok := s.storage.InStorage(url)
+	if !ok {
+		short = Shorting()
+		d.OriginalURL = url
+		d.ShortURL = short
+		s.storage.Put(d)
+		return short
+	}
+
+	s.logger.Logf(logrus.DebugLevel, "saved: %s, short: %s", url, short)
+
+	return short
 }
 
 func (s *Server) ping(c *gin.Context) {
@@ -103,4 +122,29 @@ func (s *Server) ping(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, nil)
+}
+
+func (s *Server) batch(c *gin.Context) {
+	var (
+		reqs []batchRequest
+	)
+
+	res := make([]batchResponse, 0, 0)
+
+	err := c.BindJSON(&reqs)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	for _, req := range reqs {
+		short := s.save(req.OriginalURL)
+
+		r := batchResponse{
+			CorrelationID: req.CorrelationID,
+			ShortURL:      short,
+		}
+		res = append(res, r)
+	}
+
+	c.JSON(http.StatusOK, res)
 }

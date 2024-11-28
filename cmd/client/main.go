@@ -27,19 +27,29 @@ func main() {
 
 	var r Request
 
-	bidy := "https://practicum.yandex.ru/3212342"
+	bidy := `[{
+        "correlation_id": "<с2>",
+        "original_url": "<https://practicum.yandex.ru>"
+    },{
+        "correlation_id": "<1>",
+        "original_url": "<https://practicum.yandex.ru/learn>"
+    },{
+        "correlation_id": "<строк123ификатор>",
+        "original_url": "<https://practicum.yandex.ru/learn/go-advanced/courses/6e4a1d46-9b38-4936-93c4-62f9ec2db45a/sprints/366447/topics/f04453a3-f8c6-4b19-bb87-454f61520c4e/lessons/c5404109-dc98-4636-ae51-3c3d284b129f/>"
+    }]`
+
 	_, err := json.Marshal(r)
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader([]byte(bidy)))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten/batch", bytes.NewReader([]byte(bidy)))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
 	}
-	req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
@@ -61,7 +71,7 @@ func main() {
 	defer res.Body.Close()
 
 	fmt.Println(rs)
-	fmt.Println()
+	fmt.Println(string(rBody))
 	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"), res.Header.Get("Location"))
 
 }
