@@ -149,7 +149,6 @@ func (s *Storage) loadFromPostgres() error {
 
 	rows, err := s.pgDB.Query(`SELECT uuid, short_url, original_url FROM urls`)
 	if err != nil {
-
 		return errors.Wrap(err, "query from postgres")
 	}
 	defer rows.Close()
@@ -168,6 +167,7 @@ func (s *Storage) loadFromPostgres() error {
 	}
 
 	s.log.Infof("loaded %d links from postgres", dataCounter)
+	s.log.Infoln(s.db)
 	return nil
 }
 
