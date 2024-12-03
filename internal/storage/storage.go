@@ -119,8 +119,7 @@ func (s *Storage) LoadFromFile() error {
 
 func (s *Storage) saveToPostgres(d Data) error {
 	query := `INSERT INTO urls (uuid, short_url, original_url) 
-          VALUES ($1, $2, $3) 
-          ON CONFLICT (uuid) DO NOTHING`
+          VALUES ($1, $2, $3)`
 
 	_, err := s.pgDB.Exec(query, d.UUID, d.ShortURL, d.OriginalURL)
 	if err != nil {
@@ -173,6 +172,8 @@ func (s *Storage) loadFromPostgres() error {
 
 func (s *Storage) Save(d Data) error {
 	s.db = append(s.db, d)
+	s.log.WithField("url", d.OriginalURL).Infoln("saved to locMem")
+	s.log.WithField("s.db", s.db).Infoln("s.db")
 
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
