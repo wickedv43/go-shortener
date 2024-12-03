@@ -71,6 +71,7 @@ func (s *Server) getShort(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
 	}
+	s.logger.WithField("get", short).Infoln(respURL)
 
 	c.Header("Location", respURL)
 	c.Writer.WriteHeader(http.StatusTemporaryRedirect)

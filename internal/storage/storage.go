@@ -166,14 +166,11 @@ func (s *Storage) loadFromPostgres() error {
 	}
 
 	s.log.Infof("loaded %d links from postgres", dataCounter)
-	s.log.Infoln(s.db)
 	return nil
 }
 
 func (s *Storage) Save(d Data) error {
 	s.db = append(s.db, d)
-	s.log.WithField("url", d.OriginalURL).Infoln("saved to locMem")
-	s.log.WithField("s.db", s.db).Infoln("s.db")
 
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
