@@ -73,6 +73,12 @@ func (s *Server) getShort(c *gin.Context) {
 		return
 	}
 
+	if respURL == "" {
+		s.logger.WithField("get", short).Warn("Empty URL returned for short")
+	} else {
+		s.logger.WithField("get", short).Infoln("Redirecting to URL:", respURL)
+	}
+
 	s.logger.WithField("get", short).Infoln("Redirecting to:", respURL)
 
 	c.Redirect(http.StatusTemporaryRedirect, respURL)
