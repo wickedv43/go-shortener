@@ -3,9 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
+
+	"github.com/wickedv43/go-shortener/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -66,14 +67,19 @@ func (s *Server) addNew(c *gin.Context) {
 func (s *Server) getShort(c *gin.Context) {
 	short := c.Param("short")
 
+	// Получение оригинального URL по короткой ссылке
 	respURL, ok := s.storage.Get(short)
 	if !ok {
+		// Если короткая ссылка не найдена, возвращаем 404 и прерываем выполнение
 		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
+		return
 	}
-	s.logger.WithField("get", short).Infoln(respURL)
 
-	c.Header("Location", respURL)
-	c.Writer.WriteHeader(http.StatusTemporaryRedirect)
+	// Логируем найденный URL
+	s.logger.WithField("get", short).Infoln("Redirecting to:", respURL)
+
+	// Устанавливаем заголовок Location и статус 307
+	c.Redirect(http.StatusTemporaryRedirect, respURL)
 }
 
 func (s *Server) addNewJSON(c *gin.Context) {
