@@ -29,7 +29,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	}
 
 	e := gin.New()
-	e.Use(gin.Recovery(), server.logHandler(), server.gzipMiddleware(), server.CORSMiddleware())
+	e.Use(gin.Recovery(), server.logHandler())
 
 	server.engine = e
 	server.cfg = cfg
