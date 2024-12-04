@@ -100,25 +100,38 @@ func (s *Server) addNewJSON(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	short := s.save(url.URL)
+	short, err := s.save(url.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
 
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 	c.JSON(http.StatusCreated, res)
 }
 
-func (s *Server) save(url string) string {
-	var d storage.Data
+func (s *Server) save(url string) (string, error) {
+	// Пытаемся найти короткую ссылку в хранилище
 	short, ok := s.storage.InStorage(url)
 	if !ok {
+		// Если короткая ссылка не найдена, генерируем новую
 		short = Shorting()
-		d.OriginalURL = url
-		d.ShortURL = short
-		s.storage.Put(d)
-		return short
+		d := storage.Data{
+			OriginalURL: url,
+			ShortURL:    short,
+		}
+
+		// Сохраняем в хранилище (база данных, файл или память)
+		err := s.storage.Put(d)
+		if err != nil {
+			// В случае ошибки при сохранении возвращаем ошибку
+			s.logger.WithError(err).Error("Failed to save data to storage")
+			return "", err
+		}
 	}
 
-	return short
+	// Возвращаем короткую ссылку
+	return short, nil
 }
 
 func (s *Server) ping(c *gin.Context) {
@@ -132,12 +145,14 @@ func (s *Server) ping(c *gin.Context) {
 
 func (s *Server) batch(c *gin.Context) {
 	var (
-		reqs []batchRequest
+		reqs  []batchRequest
+		err   error
+		short string
 	)
 
 	res := make([]batchResponse, 0)
 
-	err := c.BindJSON(&reqs)
+	err = c.BindJSON(&reqs)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -149,7 +164,7 @@ func (s *Server) batch(c *gin.Context) {
 	}
 
 	for _, req := range reqs {
-		short := s.save(req.OriginalURL)
+		short, err = s.save(req.OriginalURL)
 
 		r := batchResponse{
 			CorrelationID: req.CorrelationID,

@@ -6,17 +6,19 @@ import (
 )
 
 // Put(d Data) - saves Data in local memory and file
-func (s *Storage) Put(d Data) {
+func (s *Storage) Put(d Data) error {
 	d.UUID = uuid.New().ClockSequence()
 
 	err := s.Save(d)
 	if err != nil {
-		s.log.Fatal(errors.Wrap(err, "save"))
+		return errors.Wrap(err, "save")
 	}
+
+	return err
 }
 
 // Get(short string) - get data from local memory
-func (s *Storage) getFromFile(short string) (string, bool) {
+func (s *Storage) getFromLocMem(short string) (string, bool) {
 	var url string
 
 	for _, d := range s.db {
@@ -31,15 +33,25 @@ func (s *Storage) getFromFile(short string) (string, bool) {
 
 // InStorage(url string) - check if extended url is already in the database
 func (s *Storage) InStorage(url string) (string, bool) {
-	var short string
+	// Сначала проверяем в базе данных (если доступна)
+	short, found, err := s.checkPostgres(url)
+	if err != nil {
+		// Если произошла ошибка при подключении к базе данных, логируем её
+		s.log.WithError(err).Error("Error while checking URL in PostgreSQL")
+	}
+	if found {
+		return short, true
+	}
 
+	// Если не нашли в базе, проверяем в памяти
 	for _, d := range s.db {
 		if d.OriginalURL == url {
-			short = d.ShortURL
-			return short, true
+			return d.ShortURL, true
 		}
 	}
-	return short, false
+
+	// Не найдено ни в базе данных, ни в памяти
+	return "", false
 }
 
 func (s *Storage) Get(short string) (string, bool) {
@@ -49,5 +61,5 @@ func (s *Storage) Get(short string) (string, bool) {
 			return url, true
 		}
 	}
-	return s.getFromFile(short)
+	return s.getFromLocMem(short)
 }

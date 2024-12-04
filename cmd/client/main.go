@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type Request struct {
@@ -25,16 +28,16 @@ func main() {
 
 	var r Request
 
-	//	bidy := `[
-	//{
-	//        "correlation_id": "<11>",
-	//        "original_url": "fff"
-	//    },
-	//{
-	//        "correlation_id": "<12>",
-	//        "original_url": "ff3"
-	//    }
-	//]`
+	bidy := `[
+	{
+	       "correlation_id": "<11>",
+	       "original_url": "fff"
+	   },
+	{
+	       "correlation_id": "<12>",
+	       "original_url": "ff3"
+	   }
+	]`
 
 	_, err := json.Marshal(r)
 	if err != nil {
@@ -42,15 +45,15 @@ func main() {
 	}
 	fmt.Println(r)
 
-	//req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten/batch", bytes.NewReader([]byte(bidy)))
-	//if err != nil {
-	//	err = errors.New("client post")
-	//	fmt.Println(err)
-	//}
-	//req.Header.Set("Content-Type", "application/json")
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten/batch", bytes.NewReader([]byte(bidy)))
+	if err != nil {
+		err = errors.New("client post")
+		fmt.Println(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
 
-	req, err := http.NewRequest("GET", "http://localhost:8080/sGlwJpHN", nil)
-	//req.Header.Add("Accept-Encoding", "gzip")
+	//req, err := http.NewRequest("GET", "http://localhost:8080/sGlwJpHN", nil)
+	req.Header.Add("Accept-Encoding", "gzip")
 
 	res, err := client.Do(req)
 	if err != nil {
