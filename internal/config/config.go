@@ -37,6 +37,7 @@ func NewConfig(_ do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 
+	flag.Parse()
 	godotenv.Load()
 
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
@@ -61,6 +62,5 @@ func NewConfig(_ do.Injector) (*Config, error) {
 
 	cfg.Logger.Lvl = logrus.InfoLevel
 
-	flag.Parse()
 	return &cfg, nil
 }
