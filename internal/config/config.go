@@ -2,8 +2,9 @@ package config
 
 import (
 	"flag"
-	"github.com/joho/godotenv"
 	"os"
+
+	"github.com/joho/godotenv"
 
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
@@ -32,7 +33,7 @@ type Logger struct {
 
 func NewConfig(_ do.Injector) (*Config, error) {
 	var cfg Config
-	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
+	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8000", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
