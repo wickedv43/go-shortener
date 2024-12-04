@@ -163,12 +163,13 @@ func (s *Server) batch(c *gin.Context) {
 		return
 	}
 
+	result := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 	for _, req := range reqs {
 		short, err = s.save(req.OriginalURL)
 
 		r := batchResponse{
 			CorrelationID: req.CorrelationID,
-			ShortURL:      short,
+			ShortURL:      result,
 		}
 		res = append(res, r)
 	}
