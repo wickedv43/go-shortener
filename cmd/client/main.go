@@ -27,7 +27,16 @@ func main() {
 
 	var r Request
 
-	bidy := `[]`
+	bidy := `[ 
+{
+        "correlation_id": "<11>",
+        "original_url": "fff"
+    },
+{
+        "correlation_id": "<12>",
+        "original_url": "ff3"
+    }
+]`
 
 	_, err := json.Marshal(r)
 	if err != nil {

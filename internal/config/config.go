@@ -2,6 +2,8 @@ package config
 
 import (
 	"flag"
+	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"os"
 
 	"github.com/samber/do/v2"
@@ -35,6 +37,11 @@ func NewConfig(_ do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
+
+	err := godotenv.Load()
+	if err != nil {
+		return &Config{}, errors.Wrap(err, "load env")
+	}
 
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
 	if ServerAddr != "" {
