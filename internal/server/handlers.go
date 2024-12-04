@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/internal/storage"
 	"io"
 	"net/http"
@@ -110,8 +109,6 @@ func (s *Server) save(url string) string {
 		s.storage.Put(d)
 		return short
 	}
-
-	s.logger.Logf(logrus.DebugLevel, "saved: %s, short: %s", url, short)
 
 	return short
 }

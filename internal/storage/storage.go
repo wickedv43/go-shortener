@@ -172,6 +172,8 @@ func (s *Storage) loadFromPostgres() error {
 func (s *Storage) Save(d Data) error {
 	s.db = append(s.db, d)
 
+	s.log.Infoln(s.db)
+
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
 	}
