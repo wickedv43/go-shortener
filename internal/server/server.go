@@ -42,6 +42,8 @@ func NewServer(i do.Injector) (*Server, error) {
 	server.engine.GET(`/:short`, server.getShort)
 	server.engine.GET(`/ping`, server.ping)
 
+	server.logger.WithField("test", "test").Infoln(server.cfg)
+
 	return server, nil
 }
 
