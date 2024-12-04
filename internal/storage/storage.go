@@ -133,6 +133,16 @@ func (s *Storage) saveToPostgres(d Data) error {
 	return nil
 }
 
+func (s *Storage) getFromPostgres(shortID string) (string, bool) {
+	var originalURL string
+	query := `SELECT original_url FROM urls WHERE short_url = $1`
+	err := s.pgDB.QueryRow(query, shortID).Scan(&originalURL)
+	if err != nil {
+		return "", false
+	}
+	return originalURL, true
+}
+
 func (s *Storage) loadFromPostgres() error {
 	query := `
     CREATE TABLE IF NOT EXISTS urls (
@@ -171,8 +181,6 @@ func (s *Storage) loadFromPostgres() error {
 
 func (s *Storage) Save(d Data) error {
 	s.db = append(s.db, d)
-
-	s.log.Infoln(s.db)
 
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)

@@ -16,7 +16,7 @@ func (s *Storage) Put(d Data) {
 }
 
 // Get(short string) - get data from local memory
-func (s *Storage) Get(short string) (string, bool) {
+func (s *Storage) getFromFile(short string) (string, bool) {
 	var url string
 
 	for _, d := range s.db {
@@ -40,4 +40,14 @@ func (s *Storage) InStorage(url string) (string, bool) {
 		}
 	}
 	return short, false
+}
+
+func (s *Storage) Get(short string) (string, bool) {
+	if s.isPostgresAvailable() {
+		url, found := s.getFromPostgres(short)
+		if found {
+			return url, true
+		}
+	}
+	return s.getFromFile(short)
 }
