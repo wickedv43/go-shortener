@@ -165,6 +165,10 @@ func (s *Server) batch(c *gin.Context) {
 
 	for _, req := range reqs {
 		short, err = s.save(req.OriginalURL)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		result := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 		r := batchResponse{
