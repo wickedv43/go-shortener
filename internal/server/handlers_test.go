@@ -2,14 +2,19 @@ package server
 
 import (
 	"bytes"
-	"github.com/samber/do/v2"
-	"github.com/stretchr/testify/require"
-	"github.com/wickedv43/go-shortener/cmd/config"
-	"github.com/wickedv43/go-shortener/cmd/storage"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/logger"
+	"github.com/wickedv43/go-shortener/internal/storage"
+
+	"github.com/samber/do/v2"
+	"github.com/stretchr/testify/require"
 )
 
 var i = do.New()
@@ -18,6 +23,7 @@ func init() {
 	do.Provide(i, NewServer)
 	do.Provide(i, config.NewConfig)
 	do.Provide(i, storage.NewStorage)
+	do.Provide(i, logger.NewLogger)
 }
 
 // Test for "/"
@@ -43,7 +49,6 @@ func Test_addNew(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			body := "https://practicum.yandex.ru/"
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
 
@@ -62,6 +67,7 @@ func Test_addNew(t *testing.T) {
 
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 
+			os.Remove(srv.cfg.Server.FlagStoragePath)
 		})
 
 	}
@@ -89,10 +95,16 @@ func Test_getShort(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			err := srv.storage.LoadFromFile()
+			require.NoError(t, err)
 
+			var d storage.Data
 			url := "https://practicum.yandex.ru/"
 			short := Shorting()
-			srv.storage.Put(url, short)
+
+			d.OriginalURL = url
+			d.ShortURL = short
+			srv.storage.Put(d)
 
 			req := httptest.NewRequest(http.MethodGet, "/"+short, nil)
 
@@ -102,11 +114,64 @@ func Test_getShort(t *testing.T) {
 
 			res := w.Result()
 
-			err := res.Body.Close()
+			err = res.Body.Close()
 			require.NoError(t, err)
 
 			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, url, res.Header.Get("Location"))
+
+			os.Remove(srv.cfg.Server.FlagStoragePath)
+
+		})
+	}
+}
+
+func Test_addNewJSON(t *testing.T) {
+	var srv = do.MustInvoke[*Server](i)
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #1",
+			want: want{
+				code:        http.StatusCreated,
+				contentType: "application/json; charset=utf-8",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := srv.storage.LoadFromFile()
+			require.NoError(t, err)
+
+			var r Expand
+			r.URL = "https://practicum.yandex.ru/"
+
+			body, err := json.Marshal(r)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
+
+			w := httptest.NewRecorder()
+
+			srv.engine.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			err = res.Body.Close()
+			require.NoError(t, err)
+
+			require.Equal(t, test.want.code, res.StatusCode)
+			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+
+			os.Remove(srv.cfg.Server.FlagStoragePath)
 		})
 	}
 }
