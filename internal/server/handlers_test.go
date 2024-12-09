@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/storage"
@@ -100,7 +99,7 @@ func Test_getShort(t *testing.T) {
 			require.NoError(t, err)
 
 			var d storage.Data
-			url := "https://practicum.yandex.ru/"
+			url := "https://practicum.yandex.ru/123"
 			short := Shorting()
 
 			d.OriginalURL = url
@@ -169,7 +168,7 @@ func Test_addNewJSON(t *testing.T) {
 			err = res.Body.Close()
 			require.NoError(t, err)
 
-			assert.Equal(t, test.want.code, res.StatusCode)
+			require.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 
 			os.Remove(srv.cfg.Server.FlagStoragePath)
