@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/storage"
@@ -168,7 +169,7 @@ func Test_addNewJSON(t *testing.T) {
 			err = res.Body.Close()
 			require.NoError(t, err)
 
-			require.Equal(t, test.want.code, res.StatusCode)
+			assert.Equal(t, test.want.code, res.StatusCode)
 			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 
 			os.Remove(srv.cfg.Server.FlagStoragePath)
