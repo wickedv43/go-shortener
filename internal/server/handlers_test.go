@@ -151,7 +151,7 @@ func Test_addNewJSON(t *testing.T) {
 			err := srv.storage.LoadFromFile()
 			require.NoError(t, err)
 
-			var r Expand
+			var r expand
 			r.URL = "https://practicum.yandex.ru/"
 
 			body, err := json.Marshal(r)

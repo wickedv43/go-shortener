@@ -28,16 +28,7 @@ func main() {
 
 	var r Request
 
-	bidy := `[
-	{
-	       "correlation_id": "<11>",
-	       "original_url": "fff"
-	   },
-	{
-	       "correlation_id": "<12>",
-	       "original_url": "ff3"
-	   }
-	]`
+	bidy := `local.aaa`
 
 	_, err := json.Marshal(r)
 	if err != nil {
@@ -45,12 +36,12 @@ func main() {
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten/batch", bytes.NewReader([]byte(bidy)))
+	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader([]byte(bidy)))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "text/plain")
 
 	//req, err := http.NewRequest("GET", "http://localhost:8080/sGlwJpHN", nil)
 	req.Header.Add("Accept-Encoding", "gzip")

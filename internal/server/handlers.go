@@ -1,67 +1,58 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/wickedv43/go-shortener/internal/storage"
-
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
-type Expand struct {
+var errConflict = errors.New("conflict")
+
+type expand struct {
 	URL string `json:"url"`
 }
 
-type Result struct {
+type result struct {
 	Result string `json:"result"`
 }
 
-type batchRequest struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-type batchResponse struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
 func (s *Server) addNew(c *gin.Context) {
-	//
 	if c.Request.Header.Get("Content-Type") == "application/json" {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
 
-	var d storage.Data
-
 	url, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-
-	short, ok := s.storage.InStorage(string(url))
-	if !ok {
-		short = Shorting()
-		d.OriginalURL = string(url)
-		d.ShortURL = short
-		s.storage.Put(d)
+		return
 	}
 
 	c.Header("Content-Type", "text/plain")
 
+	short, err := s.save(string(url))
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
+	if err != nil {
+		if errors.Is(err, errConflict) {
+			c.Writer.WriteHeader(http.StatusConflict)
+			c.Writer.Write([]byte(resURL))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.Writer.WriteHeader(http.StatusCreated)
 
 	_, err = c.Writer.Write([]byte(resURL))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
 }
 
 func (s *Server) getShort(c *gin.Context) {
@@ -86,52 +77,29 @@ func (s *Server) getShort(c *gin.Context) {
 
 func (s *Server) addNewJSON(c *gin.Context) {
 	var (
-		url Expand
-		res Result
+		url expand
+		res result
 	)
 
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-
-	err = json.Unmarshal(body, &url)
+	err := c.BindJSON(&url)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	short, err := s.save(url.URL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
+	if err != nil {
+		if errors.Is(err, errConflict) {
+			c.JSON(http.StatusConflict, res)
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	c.JSON(http.StatusCreated, res)
-}
-
-func (s *Server) save(url string) (string, error) {
-	// Пытаемся найти короткую ссылку в хранилище
-	short, ok := s.storage.InStorage(url)
-	if !ok {
-		// Если короткая ссылка не найдена, генерируем новую
-		short = Shorting()
-		d := storage.Data{
-			OriginalURL: url,
-			ShortURL:    short,
-		}
-
-		// Сохраняем в хранилище (база данных, файл или память)
-		err := s.storage.Put(d)
-		if err != nil {
-			// В случае ошибки при сохранении возвращаем ошибку
-			s.logger.WithError(err).Error("Failed to save data to storage")
-			return "", err
-		}
-	}
-
-	// Возвращаем короткую ссылку
-	return short, nil
 }
 
 func (s *Server) ping(c *gin.Context) {
@@ -144,13 +112,22 @@ func (s *Server) ping(c *gin.Context) {
 }
 
 func (s *Server) batch(c *gin.Context) {
+	type batchRequest struct {
+		CorrelationID string `json:"correlation_id"`
+		OriginalURL   string `json:"original_url"`
+	}
+
+	type batchResponse struct {
+		CorrelationID string `json:"correlation_id"`
+		ShortURL      string `json:"short_url"`
+	}
+
 	var (
 		reqs  []batchRequest
+		resp  = make([]batchResponse, 0)
 		err   error
 		short string
 	)
-
-	res := make([]batchResponse, 0)
 
 	err = c.BindJSON(&reqs)
 	if err != nil {
@@ -169,14 +146,35 @@ func (s *Server) batch(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		result := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
+		res := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
 
 		r := batchResponse{
 			CorrelationID: req.CorrelationID,
-			ShortURL:      result,
+			ShortURL:      res,
 		}
-		res = append(res, r)
+		resp = append(resp, r)
 	}
 
-	c.JSON(http.StatusCreated, res)
+	c.JSON(http.StatusCreated, resp)
+}
+
+func (s *Server) save(url string) (string, error) {
+	short, ok := s.storage.InStorage(url)
+	if ok {
+		return short, errConflict
+	} else {
+		short = Shorting()
+		d := storage.Data{
+			OriginalURL: url,
+			ShortURL:    short,
+		}
+
+		err := s.storage.Put(d)
+		if err != nil {
+			s.logger.WithError(err).Error("Failed to save data to storage")
+			return "", err
+		}
+
+		return short, nil
+	}
 }

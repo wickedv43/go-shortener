@@ -33,24 +33,23 @@ func (s *Storage) getFromLocMem(short string) (string, bool) {
 
 // InStorage(url string) - check if extended url is already in the database
 func (s *Storage) InStorage(url string) (string, bool) {
-	// Сначала проверяем в базе данных (если доступна)
-	short, found, err := s.checkPostgres(url)
-	if err != nil {
-		// Если произошла ошибка при подключении к базе данных, логируем её
-		s.log.WithError(err).Error("Error while checking URL in PostgreSQL")
-	}
-	if found {
-		return short, true
+	if s.isPostgresAvailable() {
+		short, found, err := s.checkPostgres(url)
+		if err != nil {
+			s.log.WithError(err).Error("Error while checking URL in PostgreSQL")
+		}
+		if found {
+			return short, true
+		}
 	}
 
-	// Если не нашли в базе, проверяем в памяти
+	//locMem
 	for _, d := range s.db {
 		if d.OriginalURL == url {
 			return d.ShortURL, true
 		}
 	}
 
-	// Не найдено ни в базе данных, ни в памяти
 	return "", false
 }
 
