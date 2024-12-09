@@ -49,7 +49,7 @@ func Test_addNew(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			body := "https://practicum.yandex.ru/"
+			body := "https://practicum.yandex.ru/test"
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
 
 			w := httptest.NewRecorder()
@@ -99,7 +99,7 @@ func Test_getShort(t *testing.T) {
 			require.NoError(t, err)
 
 			var d storage.Data
-			url := "https://practicum.yandex.ru/123"
+			url := "https://practicum.yandex.ru/test"
 			short := Shorting()
 
 			d.OriginalURL = url
@@ -152,7 +152,7 @@ func Test_addNewJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			var r expand
-			r.URL = "https://practicum.yandex.ru/"
+			r.URL = "https://practicum.yandex.ru/t"
 
 			body, err := json.Marshal(r)
 			require.NoError(t, err)
