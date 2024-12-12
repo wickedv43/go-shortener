@@ -71,6 +71,8 @@ func (s *Server) jwtMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
 
+		s.logger.WithField("authHeader", authHeader).Info("Authorization")
+
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			token, err := s.generateJWT()
 			if err != nil {

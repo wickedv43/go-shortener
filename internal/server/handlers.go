@@ -167,8 +167,10 @@ func (s *Server) urls(c *gin.Context) {
 	res := make([]response, 0)
 
 	for _, d := range s.storage.DB {
+		short := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, d.ShortURL)
+
 		res = append(res, response{
-			ShortURL:    s.cfg.Server.FlagSuffixAddr + d.ShortURL,
+			ShortURL:    short,
 			OriginalURL: d.OriginalURL,
 		})
 	}
