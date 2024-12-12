@@ -158,6 +158,28 @@ func (s *Server) batch(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+func (s *Server) urls(c *gin.Context) {
+	type response struct {
+		ShortURL    string `json:"short_url"`
+		OriginalURL string `json:"original_url"`
+	}
+
+	res := make([]response, 0)
+
+	for _, d := range s.storage.DB {
+		res = append(res, response{
+			ShortURL:    d.ShortURL,
+			OriginalURL: d.OriginalURL,
+		})
+	}
+
+	if len(res) == 0 {
+		c.JSON(http.StatusNoContent, nil)
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 func (s *Server) save(url string) (string, error) {
 	short, ok := s.storage.InStorage(url)
 	if ok {

@@ -21,7 +21,7 @@ func (s *Storage) Put(d Data) error {
 func (s *Storage) getFromLocMem(short string) (string, bool) {
 	var url string
 
-	for _, d := range s.db {
+	for _, d := range s.DB {
 		if d.ShortURL == short {
 			url = d.OriginalURL
 
@@ -44,7 +44,7 @@ func (s *Storage) InStorage(url string) (string, bool) {
 	}
 
 	//locMem
-	for _, d := range s.db {
+	for _, d := range s.DB {
 		if d.OriginalURL == url {
 			return d.ShortURL, true
 		}

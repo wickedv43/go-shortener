@@ -30,6 +30,7 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	e := gin.New()
 	e.Use(gin.Recovery(), server.logHandler(), server.gzipMiddleware(), server.CORSMiddleware())
+	e.Use(server.jwtMiddleware())
 
 	server.engine = e
 	server.cfg = cfg
@@ -37,6 +38,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	server.logger = lg
 
 	server.engine.POST(`/`, server.addNew)
+	server.engine.GET(`/api/user/urls`, server.urls)
 	server.engine.POST(`/api/shorten`, server.addNewJSON)
 	server.engine.POST(`api/shorten/batch`, server.batch)
 	server.engine.GET(`/:short`, server.getShort)

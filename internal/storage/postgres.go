@@ -44,7 +44,7 @@ func (s *Storage) loadFromPostgres() error {
 		if err = rows.Scan(&d.UUID, &d.ShortURL, &d.OriginalURL); err != nil {
 			return errors.Wrap(err, "scan postgres row")
 		}
-		s.db = append(s.db, d)
+		s.DB = append(s.DB, d)
 		dataCounter++
 	}
 	if err = rows.Err(); err != nil {

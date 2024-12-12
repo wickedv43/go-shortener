@@ -67,6 +67,35 @@ func (s *Server) gzipMiddleware() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) jwtMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.Request.Header.Get("Authorization")
+
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			token, err := s.generateJWT()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+				c.Abort()
+				return
+			}
+
+			authHeader = "Bearer " + token
+			c.Request.Header.Set("Authorization", authHeader)
+		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+
+		userID, err := s.GetUserID(token)
+		if err != nil || userID <= 0 {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized: invalid token"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func (s *Server) CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")

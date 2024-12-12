@@ -24,7 +24,7 @@ type Data struct {
 }
 
 type Storage struct {
-	db      []Data
+	DB      []Data
 	pgDB    *sql.DB
 	file    *os.File
 	log     *logrus.Entry
@@ -34,7 +34,7 @@ type Storage struct {
 
 func NewStorage(i do.Injector) (*Storage, error) {
 	storage, err := do.InvokeStruct[Storage](i)
-	log := do.MustInvoke[*logger.Logger](i).WithField("component", "db")
+	log := do.MustInvoke[*logger.Logger](i).WithField("component", "DB")
 	cfg := do.MustInvoke[*config.Config](i)
 
 	if err != nil {
@@ -44,15 +44,15 @@ func NewStorage(i do.Injector) (*Storage, error) {
 	// locMem database
 	db := make([]Data, 0)
 
-	storage.db = db
+	storage.DB = db
 	storage.log = log
 	storage.cfg = cfg
 
-	//create dir for db file
+	//create dir for DB file
 	filePath, _ := filepath.Split(storage.cfg.Server.FlagStoragePath)
 	_ = os.MkdirAll(filePath, 0755)
 
-	// create db file
+	// create DB file
 	file, err := os.OpenFile(storage.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, errors.Wrap(err, "create file")
@@ -66,7 +66,7 @@ func NewStorage(i do.Injector) (*Storage, error) {
 	}
 	storage.pgDB = pgDB
 
-	// scanner for db file
+	// scanner for DB file
 	storage.scanner = bufio.NewScanner(storage.file)
 
 	return storage, err
@@ -104,7 +104,7 @@ func (s *Storage) LoadFromFile() error {
 		if err := json.Unmarshal(line, &d); err != nil {
 			return errors.Wrap(err, "unmarshal data")
 		}
-		s.db = append(s.db, d)
+		s.DB = append(s.DB, d)
 		dataCounter++
 	}
 
@@ -114,7 +114,7 @@ func (s *Storage) LoadFromFile() error {
 }
 
 func (s *Storage) Save(d Data) error {
-	s.db = append(s.db, d)
+	s.DB = append(s.DB, d)
 
 	if s.isPostgresAvailable() {
 		return s.saveToPostgres(d)
