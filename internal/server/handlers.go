@@ -168,7 +168,7 @@ func (s *Server) urls(c *gin.Context) {
 
 	for _, d := range s.storage.DB {
 		res = append(res, response{
-			ShortURL:    d.ShortURL,
+			ShortURL:    s.cfg.Server.FlagSuffixAddr + d.ShortURL,
 			OriginalURL: d.OriginalURL,
 		})
 	}
