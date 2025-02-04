@@ -2,83 +2,55 @@ package server
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
-func (s *Server) logHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (s *Server) logHandler(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		t := time.Now()
-		// before request
+		// before requestJSON
 
-		c.Next()
+		err := next(c)
 
-		// after request
+		if err != nil {
+			return err
+		}
+
+		// after requestJSON
 		latency := time.Since(t)
 
-		reqMethod := c.Request.Method
-		reqURI := c.Request.RequestURI
+		reqMethod := c.Request().Method
+		reqURI := c.Request().RequestURI
 
-		respStatus := c.Writer.Status()
-		respSize := c.Writer.Size()
+		respStatus := c.Response().Status
+		respSize := c.Response().Size
 
 		s.logger.WithFields(logrus.Fields{
-			"method":  reqMethod,
-			"uri":     reqURI,
-			"latency": latency,
+			"method":      reqMethod,
+			"uri":         reqURI,
+			"latency":     latency,
+			"resp_size":   respSize,
+			"resp_status": respStatus,
 		}).Infoln("request")
 
-		s.logger.WithFields(logrus.Fields{
-			"size":   respSize,
-			"status": respStatus,
-		}).Info("response")
+		return nil
 	}
 }
 
-func (s *Server) gzipMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		acceptEncoding := c.Request.Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		if supportsGzip {
-			gz := newCompressWriter(c)
+func (s *Server) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+		c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Response().Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
 
-			defer gz.Close()
-
-			c.Writer = gz
+		if c.Request().Method == "OPTIONS" {
+			return c.JSON(http.StatusNoContent, "")
 		}
 
-		contentEncoding := c.Request.Header.Get("Content-Encoding")
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		if sendsGzip {
-			decompresedBody, err := newCompressReader(c.Request.Body)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-				return
-			}
-
-			c.Request.Body = decompresedBody
-			defer decompresedBody.Close()
-		}
-
-		c.Next()
-	}
-}
-
-func (s *Server) CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
+		return next(c)
 	}
 }

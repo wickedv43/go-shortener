@@ -6,112 +6,92 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
 var errConflict = errors.New("conflict")
 
-type expand struct {
+type requestJSON struct {
 	URL string `json:"url"`
 }
 
-type result struct {
-	Result string `json:"result"`
+type responseJSON struct {
+	Result string `json:"response"`
 }
 
-func (s *Server) addNew(c *gin.Context) {
-	if c.Request.Header.Get("Content-Type") == "application/json" {
-		c.JSON(http.StatusBadRequest, nil)
-		return
+func (s *Server) create(c echo.Context) error {
+	if c.Request().Header.Get("Content-Type") == "application/json" {
+		return c.JSON(http.StatusBadRequest, "Bad request")
 	}
 
-	url, err := io.ReadAll(c.Request.Body)
+	body := c.Request().Body
+
+	url, err := io.ReadAll(body)
+
+	data, err := s.save(string(url))
+	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
+	s.logger.Infof("Creating new URL: %s err %s", url, err)
+
+	if errors.Is(err, errConflict) {
+		c.Response().WriteHeader(http.StatusConflict)
+		_, err = c.Response().Write([]byte(resURL))
+		return err
+	}
+
+	c.Response().Header().Set("Content-Type", "text/plain")
+	c.Response().WriteHeader(http.StatusCreated)
+
+	_, err = c.Response().Write([]byte(resURL))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c.Header("Content-Type", "text/plain")
-
-	short, err := s.save(string(url))
-	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
-	if err != nil {
-		if errors.Is(err, errConflict) {
-			c.Writer.WriteHeader(http.StatusConflict)
-			c.Writer.Write([]byte(resURL))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.Writer.WriteHeader(http.StatusCreated)
-
-	_, err = c.Writer.Write([]byte(resURL))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	return nil
 }
 
-func (s *Server) getShort(c *gin.Context) {
+func (s *Server) getShort(c echo.Context) error {
 	short := c.Param("short")
 
-	respURL, ok := s.storage.Get(short)
-	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
-		return
+	data, err := s.get(short)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	if respURL == "" {
-		s.logger.WithField("get", short).Warn("Empty URL returned for short")
-	} else {
-		s.logger.WithField("get", short).Infoln("Redirecting to URL:", respURL)
-	}
-
-	s.logger.WithField("get", short).Infoln("Redirecting to:", respURL)
-
-	c.Redirect(http.StatusTemporaryRedirect, respURL)
+	return c.Redirect(http.StatusTemporaryRedirect, data.OriginalURL)
 }
 
-func (s *Server) addNewJSON(c *gin.Context) {
+func (s *Server) createJSON(c echo.Context) error {
 	var (
-		url expand
-		res result
+		url requestJSON
+		res responseJSON
 	)
 
-	err := c.BindJSON(&url)
+	err := c.Bind(&url)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	short, err := s.save(url.URL)
-	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
-	if err != nil {
-		if errors.Is(err, errConflict) {
-			c.JSON(http.StatusConflict, res)
-			return
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+	data, err := s.save(url.URL)
+	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
+	if errors.Is(err, errConflict) {
+		return c.JSON(http.StatusConflict, res)
 	}
 
-	c.JSON(http.StatusCreated, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
-func (s *Server) ping(c *gin.Context) {
-	err := s.storage.Ping()
+func (s *Server) ping(c echo.Context) error {
+	err := s.storage.HealthCheck()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, nil)
 }
 
-func (s *Server) batch(c *gin.Context) {
+func (s *Server) batch(c echo.Context) error {
 	type batchRequest struct {
 		CorrelationID string `json:"correlation_id"`
 		OriginalURL   string `json:"original_url"`
@@ -123,30 +103,28 @@ func (s *Server) batch(c *gin.Context) {
 	}
 
 	var (
-		reqs  []batchRequest
-		resp  = make([]batchResponse, 0)
-		err   error
-		short string
+		reqs []batchRequest
+		resp = make([]batchResponse, 0)
+		err  error
+		data storage.Data
 	)
 
-	err = c.BindJSON(&reqs)
+	err = c.Bind(&reqs)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	if len(reqs) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "empty request"})
-		return
+		return c.JSON(http.StatusBadRequest, gin.H{"error": "empty requestJSON"})
 	}
 
 	for _, req := range reqs {
-		short, err = s.save(req.OriginalURL)
+		data, err = s.save(req.OriginalURL)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		res := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, short)
+		res := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
 		r := batchResponse{
 			CorrelationID: req.CorrelationID,
@@ -155,26 +133,5 @@ func (s *Server) batch(c *gin.Context) {
 		resp = append(resp, r)
 	}
 
-	c.JSON(http.StatusCreated, resp)
-}
-
-func (s *Server) save(url string) (string, error) {
-	short, ok := s.storage.InStorage(url)
-	if ok {
-		return short, errConflict
-	} else {
-		short = Shorting()
-		d := storage.Data{
-			OriginalURL: url,
-			ShortURL:    short,
-		}
-
-		err := s.storage.Put(d)
-		if err != nil {
-			s.logger.WithError(err).Error("Failed to save data to storage")
-			return "", err
-		}
-
-		return short, nil
-	}
+	return c.JSON(http.StatusCreated, resp)
 }

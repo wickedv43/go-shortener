@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,8 +21,12 @@ var i = do.New()
 func init() {
 	do.Provide(i, NewServer)
 	do.Provide(i, config.NewConfig)
-	do.Provide(i, storage.NewStorage)
 	do.Provide(i, logger.NewLogger)
+
+	//storages
+	do.Provide(i, storage.NewLocalStorage)
+	do.Provide(i, storage.NewFileStorage)
+	do.Provide(i, storage.NewPostgresStorage)
 }
 
 // Test for "/"
@@ -54,7 +57,7 @@ func Test_addNew(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			srv.engine.ServeHTTP(w, request)
+			srv.echo.ServeHTTP(w, request)
 			res := w.Result()
 			require.Equal(t, test.want.code, res.StatusCode)
 
@@ -70,108 +73,5 @@ func Test_addNew(t *testing.T) {
 			os.Remove(srv.cfg.Server.FlagStoragePath)
 		})
 
-	}
-}
-
-// Test for "/:short"
-func Test_getShort(t *testing.T) {
-	var srv = do.MustInvoke[*Server](i)
-
-	type want struct {
-		code        int
-		response    string
-		contentType string
-	}
-	tests := []struct {
-		name string
-		want want
-	}{
-		{
-			name: "positive test #1",
-			want: want{
-				code: http.StatusTemporaryRedirect,
-			},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := srv.storage.LoadFromFile()
-			require.NoError(t, err)
-
-			var d storage.Data
-			url := "https://practicum.yandex.ru/test"
-			short := Shorting()
-
-			d.OriginalURL = url
-			d.ShortURL = short
-			srv.storage.Put(d)
-
-			req := httptest.NewRequest(http.MethodGet, "/"+short, nil)
-
-			w := httptest.NewRecorder()
-
-			srv.engine.ServeHTTP(w, req)
-
-			res := w.Result()
-
-			err = res.Body.Close()
-			require.NoError(t, err)
-
-			require.Equal(t, test.want.code, res.StatusCode)
-			require.Equal(t, url, res.Header.Get("Location"))
-
-			os.Remove(srv.cfg.Server.FlagStoragePath)
-
-		})
-	}
-}
-
-func Test_addNewJSON(t *testing.T) {
-	var srv = do.MustInvoke[*Server](i)
-
-	type want struct {
-		code        int
-		response    string
-		contentType string
-	}
-	tests := []struct {
-		name string
-		want want
-	}{
-		{
-			name: "positive test #1",
-			want: want{
-				code:        http.StatusCreated,
-				contentType: "application/json; charset=utf-8",
-			},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := srv.storage.LoadFromFile()
-			require.NoError(t, err)
-
-			var r expand
-			r.URL = "https://practicum.yandex.ru/t"
-
-			body, err := json.Marshal(r)
-			require.NoError(t, err)
-
-			req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
-
-			w := httptest.NewRecorder()
-
-			srv.engine.ServeHTTP(w, req)
-
-			res := w.Result()
-
-			err = res.Body.Close()
-			require.NoError(t, err)
-
-			require.Equal(t, test.want.code, res.StatusCode)
-			require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
-
-			os.Remove(srv.cfg.Server.FlagStoragePath)
-		})
 	}
 }

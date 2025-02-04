@@ -28,7 +28,7 @@ func main() {
 
 	var r Request
 
-	bidy := `local.aaa`
+	bidy := `https://123123123ssss.ru`
 
 	_, err := json.Marshal(r)
 	if err != nil {
@@ -36,7 +36,7 @@ func main() {
 	}
 	fmt.Println(r)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader([]byte(bidy)))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewReader([]byte(bidy)))
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)

@@ -4,22 +4,36 @@ import (
 	"database/sql"
 
 	"github.com/pkg/errors"
+	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/logger"
 )
 
-func (s *Storage) checkPostgres(url string) (string, bool, error) {
-	var short string
-	err := s.pgDB.QueryRow("SELECT short_url FROM urls WHERE original_url = $1", url).Scan(&short)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", false, nil
-		}
-		return "", false, err
-	}
-	return short, true, nil
+type PostgresStorage struct {
+	pgDB *sql.DB
+	log  *logrus.Entry
+	cfg  *config.Config
 }
 
-func (s *Storage) loadFromPostgres() error {
+func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
+	storage, err := do.InvokeStruct[PostgresStorage](i)
+	log := do.MustInvoke[*logger.Logger](i).WithField("component", "db")
+	cfg := do.MustInvoke[*config.Config](i)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "invoke struct")
+	}
+
+	storage.log = log
+	storage.cfg = cfg
+
+	pgDB, err := sql.Open("postgres", storage.cfg.Server.FlagDatabaseDSN)
+	if err != nil {
+		return nil, errors.Wrap(err, "connect to postgres")
+	}
+	storage.pgDB = pgDB
+
 	query := `
     CREATE TABLE IF NOT EXISTS urls (
         uuid SERIAL PRIMARY KEY,
@@ -27,35 +41,15 @@ func (s *Storage) loadFromPostgres() error {
         original_url TEXT NOT NULL
     );`
 
-	_, err := s.pgDB.Exec(query)
+	_, err = storage.pgDB.Exec(query)
 	if err != nil {
-		return errors.Wrap(err, "failed to create urls table")
+		return nil, errors.Wrap(err, "failed to create urls table")
 	}
 
-	rows, err := s.pgDB.Query(`SELECT uuid, short_url, original_url FROM urls`)
-	if err != nil {
-		return errors.Wrap(err, "query from postgres")
-	}
-	defer rows.Close()
-
-	var dataCounter int
-	for rows.Next() {
-		var d Data
-		if err = rows.Scan(&d.UUID, &d.ShortURL, &d.OriginalURL); err != nil {
-			return errors.Wrap(err, "scan postgres row")
-		}
-		s.db = append(s.db, d)
-		dataCounter++
-	}
-	if err = rows.Err(); err != nil {
-		return errors.Wrap(err, "iterate postgres rows")
-	}
-
-	s.log.Infof("loaded %d links from postgres", dataCounter)
-	return nil
+	return storage, err
 }
 
-func (s *Storage) saveToPostgres(d Data) error {
+func (s *PostgresStorage) Save(d Data) error {
 	query := `INSERT INTO urls (uuid, short_url, original_url) 
           VALUES ($1, $2, $3)`
 
@@ -68,44 +62,40 @@ func (s *Storage) saveToPostgres(d Data) error {
 		"url":   d.OriginalURL,
 		"short": d.ShortURL,
 	}).Infoln("saved to postgres")
+
 	return nil
 }
 
-func (s *Storage) getFromPostgres(shortID string) (string, bool) {
-	var originalURL string
-	query := `SELECT original_url FROM urls WHERE short_url = $1`
-	err := s.pgDB.QueryRow(query, shortID).Scan(&originalURL)
-	if err != nil {
-		return "", false
+func (s *PostgresStorage) Get(url string) (Data, error) {
+	var data Data
+
+	query := `SELECT uuid, original_url, short_url FROM urls WHERE short_url = $1 OR original_url = $1`
+
+	err := s.pgDB.QueryRow(query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Data{}, errors.New("not found")
 	}
-	return originalURL, true
+
+	return data, nil
 }
 
-func (s *Storage) isPostgresAvailable() bool {
-	if s.pgDB == nil {
-		return false
-	}
-	// Attempt to ping the database to check the connection
-	if err := s.pgDB.Ping(); err != nil {
-		s.log.Warn("Postgres connection not available:", err)
-		return false
-	}
-
-	return true
-}
-
-func (s *Storage) Ping() error {
+func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
-func (s *Storage) Close() error {
-	if s.file != nil {
-		if err := s.file.Close(); err != nil {
-			return errors.Wrap(err, "close file")
-		}
+func (s *PostgresStorage) Delete(url string) error {
+	query := `DELETE FROM urls WHERE short_url = $1 OR original_url = $1 RETURNING uuid`
+
+	var uuid int
+	err := s.pgDB.QueryRow(query, url).Scan(&uuid)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return errors.New("not found")
 	}
-	if s.pgDB != nil {
-		return s.pgDB.Close()
-	}
+
 	return nil
+}
+
+func (s *PostgresStorage) Close() error {
+	return s.pgDB.Close()
 }
