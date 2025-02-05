@@ -87,7 +87,7 @@ func (s *Server) createJSON(c echo.Context) error {
 
 	data, err := s.save(url.URL)
 
-	res.Result = fmt.Sprintf("%s", data.ShortURL)
+	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
 	if err != nil {
 		if errors.Is(err, errConflict) {
