@@ -98,6 +98,7 @@ func (s *Server) createJSON(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
+	s.logger.Infof("Created new URL: %s", res)
 	return c.JSON(http.StatusCreated, res)
 }
 
