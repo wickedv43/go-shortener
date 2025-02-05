@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -26,16 +25,16 @@ var rs Response
 func main() {
 	client := &http.Client{}
 
-	var r Request
-	r.URL = "https://practicum.yandex.ru"
+	//var r Request
+	//r.URL = "https://practicum.yandex.ru"
+	//
+	//body, err := json.Marshal(r)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//fmt.Println(string(body))
 
-	body, err := json.Marshal(r)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(body))
-
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewBuffer(body))
+	req, err := http.NewRequest("GET", "http://localhost:8080/AbJjOCBK", nil)
 	if err != nil {
 		err = errors.New("client post")
 		fmt.Println(err)
