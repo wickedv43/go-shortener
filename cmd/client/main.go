@@ -63,6 +63,8 @@ func main() {
 	}
 	defer res.Body.Close()
 
+	fmt.Println("--------------------")
+	fmt.Println(string(rBody))
 	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"), res.Header.Get("Location"))
 
 }

@@ -66,7 +66,9 @@ func (s *Server) getShort(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	return c.Redirect(http.StatusTemporaryRedirect, data.OriginalURL)
+	c.Response().Header().Set("Location", data.OriginalURL)
+	c.Response().WriteHeader(http.StatusTemporaryRedirect)
+	return nil
 }
 
 func (s *Server) createJSON(c echo.Context) error {
