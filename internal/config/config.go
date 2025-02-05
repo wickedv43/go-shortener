@@ -33,8 +33,8 @@ type Logger struct {
 
 func NewConfig(_ do.Injector) (*Config, error) {
 	var cfg Config
-	flag.StringVar(&cfg.Server.FlagRunAddr, "a", "http://localhost:8080", "address and port to run server")
-	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
+	flag.StringVar(&cfg.Server.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "https://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 
