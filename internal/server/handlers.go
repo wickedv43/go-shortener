@@ -82,10 +82,19 @@ func (s *Server) createJSON(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
+	s.logger.Infof("Creating new URL: %s", url)
+
 	data, err := s.save(url.URL)
+
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
-	if errors.Is(err, errConflict) {
-		return c.JSON(http.StatusConflict, res)
+
+	if err != nil {
+		if errors.Is(err, errConflict) {
+			return c.JSON(http.StatusConflict, res)
+		}
+
+		s.logger.Error(err)
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	return c.JSON(http.StatusCreated, res)
