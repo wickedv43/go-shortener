@@ -29,7 +29,9 @@ func (w *gzipResponseWriter) WriteHeader(statusCode int) {
 func (s *Server) gzipMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		acceptEncoding := c.Request().Header.Get("Accept-Encoding")
-		if strings.Contains(acceptEncoding, "gzip") {
+		contentType := c.Response().Header().Get("Content-Type")
+		if strings.Contains(acceptEncoding, "gzip") && (strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html")) {
+			c.Response().Header().Set("Content-Encoding", "gzip")
 			gz := gzip.NewWriter(c.Response().Writer)
 			defer gz.Close()
 
