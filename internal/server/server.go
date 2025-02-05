@@ -27,7 +27,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	}
 
 	s.echo = echo.New()
-	s.echo.Use(middleware.Recover(), middleware.Gzip(), s.logHandler, s.CORSMiddleware)
+	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.logHandler, s.CORSMiddleware)
 
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
