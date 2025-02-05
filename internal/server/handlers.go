@@ -18,7 +18,7 @@ type requestJSON struct {
 }
 
 type responseJSON struct {
-	Result string `json:"response"`
+	Result string `json:"result"`
 }
 
 func (s *Server) create(c echo.Context) error {
