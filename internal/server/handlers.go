@@ -59,6 +59,7 @@ func (s *Server) create(c echo.Context) error {
 }
 
 func (s *Server) getShort(c echo.Context) error {
+	s.logger.Infof("Getting URL: %s", c.Request().URL)
 	short := c.Param("short")
 
 	data, err := s.get(short)
