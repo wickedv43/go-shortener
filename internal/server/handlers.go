@@ -29,15 +29,22 @@ func (s *Server) create(c echo.Context) error {
 	body := c.Request().Body
 
 	url, err := io.ReadAll(body)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Server error")
+	}
 
 	data, err := s.save(string(url))
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 	s.logger.Infof("Creating new URL: %s err %s", url, err)
 
-	if errors.Is(err, errConflict) {
-		c.Response().WriteHeader(http.StatusConflict)
-		_, err = c.Response().Write([]byte(resURL))
-		return err
+	if err != nil {
+		if errors.Is(err, errConflict) {
+			c.Response().WriteHeader(http.StatusConflict)
+			_, err = c.Response().Write([]byte(resURL))
+			return err
+		}
+
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	c.Response().Header().Set("Content-Type", "text/plain")
