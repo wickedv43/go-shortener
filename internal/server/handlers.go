@@ -99,7 +99,7 @@ func (s *Server) createJSON(c echo.Context) error {
 	}
 
 	s.logger.Infof("Created new URL: %s", res)
-	return c.JSON(http.StatusCreated, res)
+	return c.JSON(http.StatusCreated, res.Result)
 }
 
 func (s *Server) ping(c echo.Context) error {
