@@ -1,6 +1,8 @@
 package server
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -35,10 +37,12 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.storage = s.SelectStorage(i)
 
 	s.echo.POST(`/`, s.create)
-	s.echo.POST(`/api/shorten`, s.createJSON)
-	s.echo.POST(`api/shorten/batch`, s.batch)
 	s.echo.GET(`/:short`, s.getShort)
 	s.echo.GET(`/ping`, s.ping)
+
+	s.echo.POST(`/api/shorten`, s.createJSON)
+	s.echo.POST(`api/shorten/batch`, s.batch)
+	s.echo.GET(`/api/user/urls`, s.userURLs)
 
 	return s, nil
 }
@@ -51,7 +55,6 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 		return do.MustInvoke[*storage.PostgresStorage](i)
 	}
 
-	//Пробуем файловое хранилище
 	if _, err = do.Invoke[*storage.FileStorage](i); err == nil {
 		s.logger.WithField("storage", i).Info("using file storage")
 		return do.MustInvoke[*storage.FileStorage](i)
@@ -61,7 +64,7 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 	return do.MustInvoke[*storage.LocalStorage](i)
 }
 
-func (s *Server) save(expand string) (storage.Data, error) {
+func (s *Server) save(expand string, userID int) (storage.Data, error) {
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
 	}
@@ -71,7 +74,7 @@ func (s *Server) save(expand string) (storage.Data, error) {
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
-		data.UUID = uuid.New().ClockSequence()
+		data.UUID = userID
 
 		err = s.storage.Save(data)
 		if err != nil {
@@ -87,6 +90,16 @@ func (s *Server) get(short string) (storage.Data, error) {
 	data, err := s.storage.Get(short)
 	if err != nil {
 		return storage.Data{}, errors.Wrap(err, "get error")
+	}
+	return data, nil
+}
+
+// TODO:?
+func (s *Server) getUserURLs(userID int) ([]storage.Data, error) {
+	data, err := s.storage.GetUserURLs(userID)
+	if err != nil {
+		//TODO: err noContent
+		return nil, errors.Wrap(err, "get user urls error")
 	}
 	return data, nil
 }
