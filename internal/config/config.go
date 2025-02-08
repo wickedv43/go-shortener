@@ -46,7 +46,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 
 	err := godotenv.Load()
 	if err != nil {
-		cfg.log.Fatal(err, "loading .env file")
+		cfg.log.Warn(err, "loading .env file")
 	}
 
 	//env
