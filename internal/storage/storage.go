@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	_ "github.com/lib/pq"
 )
 
@@ -11,9 +13,9 @@ type Data struct {
 }
 
 type DataKeeper interface {
-	Save(d Data) error
-	Get(s string) (Data, error)
-	Delete(string) error
+	Save(c context.Context, d Data) error
+	Get(c context.Context, s string) (Data, error)
+	Delete(c context.Context, s string) error
 
 	HealthCheck() error
 

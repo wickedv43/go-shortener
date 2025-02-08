@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
@@ -29,13 +31,13 @@ func NewLocalStorage(i do.Injector) (*LocalStorage, error) {
 	return storage, nil
 }
 
-func (l *LocalStorage) Save(d Data) error {
+func (l *LocalStorage) Save(_ context.Context, d Data) error {
 	l.locMem = append(l.locMem, d)
 
 	return nil
 }
 
-func (l *LocalStorage) Get(s string) (Data, error) {
+func (l *LocalStorage) Get(_ context.Context, s string) (Data, error) {
 	for _, data := range l.locMem {
 		if data.ShortURL == s || data.OriginalURL == s {
 			return data, nil
@@ -45,18 +47,13 @@ func (l *LocalStorage) Get(s string) (Data, error) {
 	return Data{}, errors.New("not found")
 }
 
-func (l *LocalStorage) Delete(url string) error {
+func (l *LocalStorage) Delete(_ context.Context, url string) error {
 	for i, data := range l.locMem {
 		if data.OriginalURL == url {
 			l.locMem = append(l.locMem[:i], l.locMem[i+1:]...)
 		}
 
 	}
-	return nil
-}
-
-func (l *LocalStorage) Load() error {
-	//TODO implement me
 	return nil
 }
 

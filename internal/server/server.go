@@ -61,19 +61,21 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 	return do.MustInvoke[*storage.LocalStorage](i)
 }
 
-func (s *Server) save(expand string) (storage.Data, error) {
+func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
+	ctx := c.Request().Context()
+
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
 	}
 
-	data, err := s.storage.Get(expand)
+	data, err := s.storage.Get(ctx, expand)
 
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
 		data.UUID = uuid.New().ClockSequence()
 
-		err = s.storage.Save(data)
+		err = s.storage.Save(ctx, data)
 		if err != nil {
 			return storage.Data{}, errors.Wrap(err, "save error")
 		}
@@ -83,8 +85,10 @@ func (s *Server) save(expand string) (storage.Data, error) {
 	return data, errConflict
 }
 
-func (s *Server) get(short string) (storage.Data, error) {
-	data, err := s.storage.Get(short)
+func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
+	ctx := c.Request().Context()
+
+	data, err := s.storage.Get(ctx, short)
 	if err != nil {
 		return storage.Data{}, errors.Wrap(err, "get error")
 	}

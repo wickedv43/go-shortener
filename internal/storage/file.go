@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -43,7 +44,7 @@ func NewFileStorage(i do.Injector) (*FileStorage, error) {
 	return storage, err
 }
 
-func (s *FileStorage) Get(url string) (Data, error) {
+func (s *FileStorage) Get(_ context.Context, url string) (Data, error) {
 	// Открываем файл
 	file, err := s.Open()
 	if err != nil {
@@ -80,7 +81,7 @@ func (s *FileStorage) Get(url string) (Data, error) {
 	return Data{}, errors.New("URL not found")
 }
 
-func (s *FileStorage) Delete(_ string) error {
+func (s *FileStorage) Delete(_ context.Context, _ string) error {
 	return nil
 }
 
@@ -101,7 +102,7 @@ func (s *FileStorage) Close() error {
 	return s.file.Close()
 }
 
-func (s *FileStorage) Save(d Data) error {
+func (s *FileStorage) Save(_ context.Context, d Data) error {
 	var err error
 
 	s.file, err = s.Open()

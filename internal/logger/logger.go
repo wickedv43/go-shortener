@@ -1,8 +1,6 @@
 package logger
 
 import (
-	"github.com/wickedv43/go-shortener/internal/config"
-
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -11,11 +9,10 @@ type Logger struct {
 	*logrus.Logger
 }
 
-func NewLogger(i do.Injector) (*Logger, error) {
-	cfg := do.MustInvoke[*config.Config](i)
+func NewLogger(_ do.Injector) (*Logger, error) {
 
 	log := logrus.New()
-	log.SetLevel(cfg.Logger.Lvl)
+	log.SetLevel(logrus.InfoLevel)
 
 	return &Logger{
 		log,

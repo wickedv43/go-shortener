@@ -33,7 +33,7 @@ func (s *Server) create(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	data, err := s.save(string(url))
+	data, err := s.save(c, string(url))
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 	s.logger.Infof("Creating new URL: %s err %s", url, err)
 
@@ -62,7 +62,7 @@ func (s *Server) getShort(c echo.Context) error {
 	s.logger.Infof("Getting URL: %s", c.Request().URL)
 	short := c.Param("short")
 
-	data, err := s.get(short)
+	data, err := s.get(c, short)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -85,7 +85,7 @@ func (s *Server) createJSON(c echo.Context) error {
 
 	s.logger.Infof("Creating new URL: %s", url)
 
-	data, err := s.save(url.URL)
+	data, err := s.save(c, url.URL)
 
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
@@ -138,7 +138,7 @@ func (s *Server) batch(c echo.Context) error {
 	}
 
 	for _, req := range reqs {
-		data, err = s.save(req.OriginalURL)
+		data, err = s.save(c, req.OriginalURL)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
