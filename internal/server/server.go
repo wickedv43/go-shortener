@@ -70,14 +70,18 @@ func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	ctx := c.Request().Context()
 
 	userIDInterface := c.Get("userID")
-	userIDStr, ok := userIDInterface.(string)
-	if !ok || userIDStr == "" {
-		return storage.Data{}, errors.New("userID is missing or not a valid string")
+	if userIDInterface == nil {
+		return storage.Data{}, errors.New("userID is missing")
 	}
 
-	userID, err := strconv.Atoi(userIDStr)
+	userID, ok := userIDInterface.(string)
+	if !ok || userID == "" {
+		return storage.Data{}, errors.New("invalid userID format")
+	}
+
+	id, err := strconv.Atoi(userID)
 	if err != nil {
-		return storage.Data{}, errors.Wrap(err, "convert userID to int error")
+		return storage.Data{}, errors.New("invalid user ID")
 	}
 
 	if expand == "" {
@@ -89,7 +93,7 @@ func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
-		data.UUID = userID
+		data.UUID = id
 
 		err = s.storage.Save(ctx, data)
 		if err != nil {

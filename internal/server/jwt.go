@@ -19,11 +19,11 @@ var (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID int `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 func (s *Server) createJWT(c echo.Context) (string, error) {
-	userID := uuid.New().ClockSequence()
+	userID := uuid.New().String()
 
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,7 +35,7 @@ func (s *Server) createJWT(c echo.Context) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	c.Set("userID", strconv.Itoa(userID))
+	c.Set("userID", userID)
 	id := c.Get("userID").(string)
 	s.logger.Infof("UserID : %s", id)
 
