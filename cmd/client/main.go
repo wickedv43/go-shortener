@@ -1,13 +1,9 @@
 package main
 
 import (
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
-	"github.com/pkg/errors"
+	"github.com/go-resty/resty/v2"
 )
 
 type Request struct {
@@ -23,47 +19,21 @@ var rs Response
 // task post
 // common post for test
 func main() {
-	client := &http.Client{}
 
-	//var r Request
-	//r.URL = "https://practicum.yandex.ru"
-	//
-	//body, err := json.Marshal(r)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//fmt.Println(string(body))
+	r := resty.New()
 
-	req, err := http.NewRequest("GET", "http://localhost:8080/AbJjOCBK", nil)
-	if err != nil {
-		err = errors.New("client post")
-		fmt.Println(err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	//req, err := http.NewRequest("GET", "http://localhost:8080/sGlwJpHN", nil)
-	req.Header.Add("Accept-Encoding", "gzip")
-
-	res, err := client.Do(req)
+	resp, err := r.R().
+		SetHeader("Content-Type", "text/plain").
+		SetBody("https://www.google.com").
+		Post("http://localhost:8080/")
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	//gzip reader
-	bodyGZIP, err := gzip.NewReader(res.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	rBody, err := io.ReadAll(bodyGZIP)
-	_ = json.Unmarshal(rBody, &rs)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer res.Body.Close()
 
 	fmt.Println("--------------------")
-	fmt.Println(string(rBody))
-	fmt.Println(res.StatusCode, res.Header.Get("Content-Encoding"), res.Header.Get("Location"))
+	fmt.Println(string(resp.Body()))
+	fmt.Println("--------------------")
+	fmt.Println(resp.StatusCode(), resp.Header().Get("Content-Encoding"), resp.Header().Get("Location"))
+	fmt.Println(resp.Cookies())
 
 }

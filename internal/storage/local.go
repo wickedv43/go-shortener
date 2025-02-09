@@ -47,6 +47,22 @@ func (l *LocalStorage) Get(_ context.Context, s string) (Data, error) {
 	return Data{}, errors.New("not found")
 }
 
+func (l *LocalStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
+	data := make([]Data, 0)
+
+	for _, d := range l.locMem {
+		if d.UUID == userID {
+			data = append(data, d)
+		}
+	}
+
+	if len(data) == 0 {
+		return data, errors.New("no content")
+	}
+
+	return data, nil
+}
+
 func (l *LocalStorage) Delete(_ context.Context, url string) error {
 	for i, data := range l.locMem {
 		if data.OriginalURL == url {

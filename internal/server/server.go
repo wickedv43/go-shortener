@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/wickedv43/go-shortener/internal/config"
@@ -27,7 +26,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	}
 
 	s.echo = echo.New()
-	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.logHandler, s.CORSMiddleware)
+	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.authMiddleware, s.logHandler, s.CORSMiddleware)
 
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
@@ -35,10 +34,14 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.storage = s.SelectStorage(i)
 
 	s.echo.POST(`/`, s.create)
-	s.echo.POST(`/api/shorten`, s.createJSON)
-	s.echo.POST(`api/shorten/batch`, s.batch)
 	s.echo.GET(`/:short`, s.getShort)
+
 	s.echo.GET(`/ping`, s.ping)
+
+	s.echo.POST(`/api/shorten`, s.createJSON)
+	s.echo.POST(`/api/shorten/batch`, s.batch)
+
+	s.echo.GET(`/api/user/urls`, s.userURLs)
 
 	return s, nil
 }
@@ -63,6 +66,7 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 
 func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	ctx := c.Request().Context()
+	userID := c.Get("userID").(int)
 
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
@@ -73,7 +77,7 @@ func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
-		data.UUID = uuid.New().ClockSequence()
+		data.UUID = userID
 
 		err = s.storage.Save(ctx, data)
 		if err != nil {
@@ -92,6 +96,21 @@ func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 	if err != nil {
 		return storage.Data{}, errors.Wrap(err, "get error")
 	}
+	return data, nil
+}
+
+func (s *Server) getAll(c echo.Context) ([]storage.Data, error) {
+	ctx := c.Request().Context()
+	userID := c.Get("userID").(int)
+
+	data, err := s.storage.GetAll(ctx, userID)
+	if err != nil {
+		if errors.Is(err, errNoContent) {
+			return []storage.Data{}, err
+		}
+		return nil, errors.Wrap(err, "getAll error")
+	}
+
 	return data, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -20,30 +21,33 @@ type Claims struct {
 	UserID int `json:"user_id"`
 }
 
-// Функция создания JWT
-func createJWT(userID int) (string, error) {
+func (s *Server) createJWT(c echo.Context) (string, error) {
+	userID := uuid.New().ClockSequence()
+
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
+		//generate userID
 		UserID: userID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
+	c.Set("userID", userID)
+
 	return token.SignedString(secretKey)
 }
 
-func getUserIDFromCookie(c echo.Context) (int, error) {
+func (s *Server) getUserIDFromCookie(c echo.Context) (int, error) {
 	cookie, err := c.Cookie(cookieName)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrapf(err, "get cookie %s", cookieName)
 	}
 
 	token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
-
 	if err != nil {
 		return 0, err
 	}
@@ -51,11 +55,10 @@ func getUserIDFromCookie(c echo.Context) (int, error) {
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims.UserID, nil
 	}
-
-	return 0, echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+	return 0, errors.Wrapf(err, "get userID from cookie %s", cookieName)
 }
 
-func authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (s *Server) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var (
 			jwtToken string
@@ -64,10 +67,9 @@ func authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		_, err = c.Cookie(cookieName)
 		if err != nil {
-			userID := uuid.New().ClockSequence()
-			jwtToken, err = createJWT(userID)
+			jwtToken, err = s.createJWT(c)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "err generate token")
+				return c.JSON(http.StatusInternalServerError, "middleware err generate token")
 			}
 
 			c.SetCookie(&http.Cookie{

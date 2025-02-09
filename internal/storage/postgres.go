@@ -80,6 +80,37 @@ func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 	return data, nil
 }
 
+func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error) {
+	var data []Data
+	var err error
+
+	query := `SELECT uuid, original_url, short_url FROM urls WHERE uuid = $1`
+
+	rows, err := s.pgDB.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, errors.Wrap(err, "get all urls query failed")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var d Data
+		if err = rows.Scan(&d.UUID, &d.OriginalURL, &d.ShortURL); err != nil {
+			return nil, errors.Wrap(err, "failed to scan row")
+		}
+		data = append(data, d)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows iteration error")
+	}
+
+	if len(data) == 0 {
+		return nil, errors.New("no content")
+	}
+
+	return data, nil
+}
+
 func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }

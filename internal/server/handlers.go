@@ -12,6 +12,7 @@ import (
 )
 
 var errConflict = errors.New("conflict")
+var errNoContent = errors.New("no content")
 
 type requestJSON struct {
 	URL string `json:"url"`
@@ -153,4 +154,23 @@ func (s *Server) batch(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, resp)
+}
+
+func (s *Server) userURLs(c echo.Context) error {
+	userID, err := s.getUserIDFromCookie(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "Unauthorized")
+	}
+
+	c.Set("userID", userID)
+
+	urls, err := s.getAll(c)
+	if err != nil {
+		if errors.Is(err, errNoContent) {
+			return c.JSON(http.StatusNoContent, "No content")
+		}
+		return c.JSON(http.StatusInternalServerError, "getting data")
+	}
+
+	return c.JSON(http.StatusOK, urls)
 }
