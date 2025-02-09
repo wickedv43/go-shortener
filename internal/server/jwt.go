@@ -35,6 +35,7 @@ func (s *Server) createJWT(c echo.Context) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	c.Set("userID", userID)
+	s.logger.Infof("UserID : %d", userID)
 
 	return token.SignedString(secretKey)
 }

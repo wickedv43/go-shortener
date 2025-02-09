@@ -56,7 +56,7 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 
 	//Пробуем файловое хранилище
 	if _, err = do.Invoke[*storage.FileStorage](i); err == nil {
-		s.logger.WithField("storage", i).Info("using file storage")
+		s.logger.WithField("storage", "file").Info("using file storage")
 		return do.MustInvoke[*storage.FileStorage](i)
 	}
 
@@ -66,7 +66,7 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 
 func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	ctx := c.Request().Context()
-	userID := c.Get("userID").(int)
+	userID := c.Get("userID").(string)
 
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")

@@ -157,12 +157,10 @@ func (s *Server) batch(c echo.Context) error {
 }
 
 func (s *Server) userURLs(c echo.Context) error {
-	userID, err := s.getUserIDFromCookie(c)
+	_, err := s.getUserIDFromCookie(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "Unauthorized")
 	}
-
-	c.Set("userID", userID)
 
 	urls, err := s.getAll(c)
 	if err != nil {
