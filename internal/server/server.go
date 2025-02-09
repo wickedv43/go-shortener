@@ -1,6 +1,8 @@
 package server
 
 import (
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/wickedv43/go-shortener/internal/config"
@@ -66,7 +68,11 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 
 func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	ctx := c.Request().Context()
-	userID := c.Get("userID").(string)
+
+	userID, err := strconv.Atoi(c.Get("userID").(string))
+	if err != nil {
+		return storage.Data{}, errors.Wrap(err, "convert userID to int error")
+	}
 
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")

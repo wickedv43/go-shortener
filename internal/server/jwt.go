@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -34,8 +35,9 @@ func (s *Server) createJWT(c echo.Context) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	c.Set("userID", userID)
-	s.logger.Infof("UserID : %d", userID)
+	c.Set("userID", strconv.Itoa(userID))
+	id := c.Get("userID").(string)
+	s.logger.Infof("UserID : %s", id)
 
 	return token.SignedString(secretKey)
 }
