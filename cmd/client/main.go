@@ -24,7 +24,7 @@ func main() {
 
 	resp, err := r.R().
 		SetHeader("Content-Type", "text/plain").
-		SetBody("https://www.google.com").
+		SetBody("https://www.googxcvlkjzxhcvlkjle.com").
 		Post("http://localhost:8080/")
 	if err != nil {
 		fmt.Println(err)

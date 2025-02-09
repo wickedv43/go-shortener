@@ -69,7 +69,13 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	ctx := c.Request().Context()
 
-	userID, err := strconv.Atoi(c.Get("userID").(string))
+	userIDInterface := c.Get("userID")
+	userIDStr, ok := userIDInterface.(string)
+	if !ok || userIDStr == "" {
+		return storage.Data{}, errors.New("userID is missing or not a valid string")
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
 		return storage.Data{}, errors.Wrap(err, "convert userID to int error")
 	}
