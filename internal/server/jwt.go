@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -19,11 +18,11 @@ var (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string `json:"user_id"`
+	UserID int `json:"user_id"`
 }
 
-func (s *Server) createJWT(c echo.Context) (string, error) {
-	userID := uuid.New().String()
+func (s *Server) createJWT() (string, error) {
+	userID := uuid.New().ClockSequence()
 
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -34,10 +33,6 @@ func (s *Server) createJWT(c echo.Context) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	c.Set("userID", userID)
-	id := c.Get("userID").(string)
-	s.logger.Infof("UserID : %s", id)
 
 	return token.SignedString(secretKey)
 }
@@ -70,7 +65,7 @@ func (s *Server) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		_, err = c.Cookie(cookieName)
 		if err != nil {
-			jwtToken, err = s.createJWT(c)
+			jwtToken, err = s.createJWT()
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, "middleware err generate token")
 			}

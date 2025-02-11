@@ -1,7 +1,7 @@
 package server
 
 import (
-	"strconv"
+	"context"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -66,24 +66,7 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 	return do.MustInvoke[*storage.LocalStorage](i)
 }
 
-func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
-	ctx := c.Request().Context()
-
-	userIDInterface := c.Get("userID")
-	if userIDInterface == nil {
-		return storage.Data{}, errors.New("userID is missing")
-	}
-
-	userID, ok := userIDInterface.(string)
-	if !ok || userID == "" {
-		return storage.Data{}, errors.New("invalid userID format")
-	}
-
-	id, err := strconv.Atoi(userID)
-	if err != nil {
-		return storage.Data{}, errors.New("invalid user ID")
-	}
-
+func (s *Server) save(ctx context.Context, expand string, userID int) (storage.Data, error) {
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
 	}
@@ -93,7 +76,7 @@ func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
-		data.UUID = id
+		data.UUID = userID
 
 		err = s.storage.Save(ctx, data)
 		if err != nil {
@@ -117,7 +100,11 @@ func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 
 func (s *Server) getAll(c echo.Context) ([]storage.Data, error) {
 	ctx := c.Request().Context()
-	userID := c.Get("userID").(int)
+
+	userID, err := s.getUserIDFromCookie(c)
+	if err != nil {
+		return nil, err
+	}
 
 	data, err := s.storage.GetAll(ctx, userID)
 	if err != nil {

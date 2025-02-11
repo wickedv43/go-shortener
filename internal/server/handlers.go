@@ -34,9 +34,14 @@ func (s *Server) create(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	data, err := s.save(c, string(url))
+	userID, err := s.getUserIDFromCookie(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Server error")
+	}
+
+	data, err := s.save(c.Request().Context(), string(url), userID)
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
-	s.logger.Infof("Creating new URL: %s err %s", url, err)
+	s.logger.Infof("short URL: %s for user %d", url, userID)
 
 	if err != nil {
 		if errors.Is(err, errConflict) {
@@ -53,7 +58,7 @@ func (s *Server) create(c echo.Context) error {
 
 	_, err = c.Response().Write([]byte(resURL))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	return nil
@@ -65,7 +70,7 @@ func (s *Server) getShort(c echo.Context) error {
 
 	data, err := s.get(c, short)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	c.Response().Header().Set("Location", data.OriginalURL)
@@ -81,7 +86,12 @@ func (s *Server) createJSON(c echo.Context) error {
 
 	err := c.Bind(&url)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, "Server error")
+	}
+
+	userID, err := s.getUserIDFromCookie(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	s.logger.Infof("Creating new URL: %s", url)
@@ -129,6 +139,11 @@ func (s *Server) batch(c echo.Context) error {
 		data storage.Data
 	)
 
+	userID, err := s.getUserIDFromCookie(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Server error")
+	}
+
 	err = c.Bind(&reqs)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -139,7 +154,7 @@ func (s *Server) batch(c echo.Context) error {
 	}
 
 	for _, req := range reqs {
-		data, err = s.save(c, req.OriginalURL)
+		data, err = s.save(c.Request().Context(), req.OriginalURL, userID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
