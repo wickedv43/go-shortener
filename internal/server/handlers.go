@@ -12,6 +12,7 @@ import (
 )
 
 var errConflict = errors.New("conflict")
+var errNoContent = errors.New("no content")
 
 type requestJSON struct {
 	URL string `json:"url"`
@@ -22,11 +23,6 @@ type responseJSON struct {
 }
 
 func (s *Server) create(c echo.Context) error {
-	userID, err := getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "Unauthorized")
-	}
-
 	if c.Request().Header.Get("Content-Type") == "application/json" {
 		return c.JSON(http.StatusBadRequest, "Bad request")
 	}
@@ -38,8 +34,9 @@ func (s *Server) create(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	data, err := s.save(string(url), userID)
+	data, err := s.save(c, string(url))
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
+	s.logger.Infof("Creating new URL: %s err %s", url, err)
 
 	if err != nil {
 		if errors.Is(err, errConflict) {
@@ -63,9 +60,10 @@ func (s *Server) create(c echo.Context) error {
 }
 
 func (s *Server) getShort(c echo.Context) error {
+	s.logger.Infof("Getting URL: %s", c.Request().URL)
 	short := c.Param("short")
 
-	data, err := s.get(short)
+	data, err := s.get(c, short)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -81,19 +79,14 @@ func (s *Server) createJSON(c echo.Context) error {
 		res responseJSON
 	)
 
-	userID, err := getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "Unauthorized")
-	}
-
-	err = c.Bind(&url)
+	err := c.Bind(&url)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	s.logger.Infof("Creating new URL: %s", url)
 
-	data, err := s.save(url.URL, userID)
+	data, err := s.save(c, url.URL)
 
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
@@ -132,13 +125,9 @@ func (s *Server) batch(c echo.Context) error {
 	var (
 		reqs []batchRequest
 		resp = make([]batchResponse, 0)
+		err  error
 		data storage.Data
 	)
-
-	userID, err := getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "Unauthorized")
-	}
 
 	err = c.Bind(&reqs)
 	if err != nil {
@@ -150,7 +139,7 @@ func (s *Server) batch(c echo.Context) error {
 	}
 
 	for _, req := range reqs {
-		data, err = s.save(req.OriginalURL, userID)
+		data, err = s.save(c, req.OriginalURL)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
@@ -168,12 +157,18 @@ func (s *Server) batch(c echo.Context) error {
 }
 
 func (s *Server) userURLs(c echo.Context) error {
-	userID, err := getUserIDFromCookie(c)
+	_, err := s.getUserIDFromCookie(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "Unauthorized"})
+		return c.JSON(http.StatusUnauthorized, "Unauthorized")
 	}
 
-	data, err := s.getUserURLs(userID)
+	urls, err := s.getAll(c)
+	if err != nil {
+		if errors.Is(err, errNoContent) {
+			return c.JSON(http.StatusNoContent, "No content")
+		}
+		return c.JSON(http.StatusInternalServerError, "getting data")
+	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, urls)
 }

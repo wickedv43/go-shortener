@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -43,8 +44,7 @@ func NewFileStorage(i do.Injector) (*FileStorage, error) {
 	return storage, err
 }
 
-func (s *FileStorage) Get(url string) (Data, error) {
-	// Открываем файл
+func (s *FileStorage) Get(_ context.Context, url string) (Data, error) {
 	file, err := s.Open()
 	if err != nil {
 		return Data{}, errors.Wrap(err, "open file")
@@ -57,7 +57,6 @@ func (s *FileStorage) Get(url string) (Data, error) {
 		var d Data
 		line := scanner.Bytes()
 
-		// Пропускаем пустые строки
 		if len(line) == 0 {
 			continue
 		}
@@ -80,7 +79,48 @@ func (s *FileStorage) Get(url string) (Data, error) {
 	return Data{}, errors.New("URL not found")
 }
 
-func (s *FileStorage) Delete(_ string) error {
+func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
+	file, err := s.Open()
+	if err != nil {
+		return []Data{}, errors.Wrap(err, "open file")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	data := make([]Data, 0)
+
+	for scanner.Scan() {
+		var d Data
+		line := scanner.Bytes()
+
+		if len(line) == 0 {
+			continue
+		}
+
+		if err = json.Unmarshal(line, &d); err != nil {
+			return []Data{}, errors.Wrap(err, "unmarshal data")
+		}
+
+		s.log.WithField("scan", d).Info("scanning line")
+
+		if d.UUID == userID {
+			data = append(data, d)
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		return []Data{}, errors.Wrap(err, "scan file")
+	}
+
+	if len(data) == 0 {
+		return []Data{}, errors.New("no content")
+	}
+
+	return data, nil
+}
+
+func (s *FileStorage) Delete(_ context.Context, _ string) error {
 	return nil
 }
 
@@ -101,7 +141,7 @@ func (s *FileStorage) Close() error {
 	return s.file.Close()
 }
 
-func (s *FileStorage) Save(d Data) error {
+func (s *FileStorage) Save(_ context.Context, d Data) error {
 	var err error
 
 	s.file, err = s.Open()

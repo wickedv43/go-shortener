@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/pkg/errors"
@@ -49,11 +50,11 @@ func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 	return storage, err
 }
 
-func (s *PostgresStorage) Save(d Data) error {
+func (s *PostgresStorage) Save(ctx context.Context, d Data) error {
 	query := `INSERT INTO urls (uuid, short_url, original_url) 
           VALUES ($1, $2, $3)`
 
-	_, err := s.pgDB.Exec(query, d.UUID, d.ShortURL, d.OriginalURL)
+	_, err := s.pgDB.ExecContext(ctx, query, d.UUID, d.ShortURL, d.OriginalURL)
 	if err != nil {
 		return errors.Wrap(err, "save to postgres")
 	}
@@ -66,14 +67,45 @@ func (s *PostgresStorage) Save(d Data) error {
 	return nil
 }
 
-func (s *PostgresStorage) Get(url string) (Data, error) {
+func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 	var data Data
 
 	query := `SELECT uuid, original_url, short_url FROM urls WHERE short_url = $1 OR original_url = $1`
 
-	err := s.pgDB.QueryRow(query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL)
+	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Data{}, errors.New("not found")
+	}
+
+	return data, nil
+}
+
+func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error) {
+	var data []Data
+	var err error
+
+	query := `SELECT uuid, original_url, short_url FROM urls WHERE uuid = $1`
+
+	rows, err := s.pgDB.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, errors.Wrap(err, "get all urls query failed")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var d Data
+		if err = rows.Scan(&d.UUID, &d.OriginalURL, &d.ShortURL); err != nil {
+			return nil, errors.Wrap(err, "failed to scan row")
+		}
+		data = append(data, d)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows iteration error")
+	}
+
+	if len(data) == 0 {
+		return nil, errors.New("no content")
 	}
 
 	return data, nil
@@ -83,11 +115,11 @@ func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
-func (s *PostgresStorage) Delete(url string) error {
+func (s *PostgresStorage) Delete(ctx context.Context, url string) error {
 	query := `DELETE FROM urls WHERE short_url = $1 OR original_url = $1 RETURNING uuid`
 
 	var uuid int
-	err := s.pgDB.QueryRow(query, url).Scan(&uuid)
+	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&uuid)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return errors.New("not found")

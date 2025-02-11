@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/wickedv43/go-shortener/internal/logger"
 
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ import (
 
 type Config struct {
 	Server Server
-	Logger Logger
+	log    *logrus.Entry
 }
 
 // Server struct
@@ -31,16 +32,24 @@ type Logger struct {
 	Lvl logrus.Level
 }
 
-func NewConfig(_ do.Injector) (*Config, error) {
+func NewConfig(i do.Injector) (*Config, error) {
 	var cfg Config
+
+	cfg.log = do.MustInvoke[*logger.Logger](i).WithField("component", "config")
+
+	//flags
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
-
 	flag.Parse()
-	godotenv.Load()
 
+	err := godotenv.Load()
+	if err != nil {
+		cfg.log.Warn(err, "loading .env file")
+	}
+
+	//env
 	ServerAddr := os.Getenv("SERVER_ADDRESS")
 	if ServerAddr != "" {
 		cfg.Server.FlagRunAddr = ServerAddr
@@ -60,8 +69,6 @@ func NewConfig(_ do.Injector) (*Config, error) {
 	if DatabaseDSN != "" {
 		cfg.Server.FlagDatabaseDSN = DatabaseDSN
 	}
-
-	cfg.Logger.Lvl = logrus.InfoLevel
 
 	return &cfg, nil
 }

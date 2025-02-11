@@ -1,9 +1,8 @@
 package server
 
 import (
-	"database/sql"
+	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/wickedv43/go-shortener/internal/config"
@@ -29,7 +28,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	}
 
 	s.echo = echo.New()
-	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.logHandler, s.CORSMiddleware)
+	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.authMiddleware, s.logHandler, s.CORSMiddleware)
 
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
@@ -38,10 +37,12 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	s.echo.POST(`/`, s.create)
 	s.echo.GET(`/:short`, s.getShort)
+
 	s.echo.GET(`/ping`, s.ping)
 
 	s.echo.POST(`/api/shorten`, s.createJSON)
-	s.echo.POST(`api/shorten/batch`, s.batch)
+	s.echo.POST(`/api/shorten/batch`, s.batch)
+
 	s.echo.GET(`/api/user/urls`, s.userURLs)
 
 	return s, nil
@@ -55,8 +56,9 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 		return do.MustInvoke[*storage.PostgresStorage](i)
 	}
 
+	//Пробуем файловое хранилище
 	if _, err = do.Invoke[*storage.FileStorage](i); err == nil {
-		s.logger.WithField("storage", i).Info("using file storage")
+		s.logger.WithField("storage", "file").Info("using file storage")
 		return do.MustInvoke[*storage.FileStorage](i)
 	}
 
@@ -64,19 +66,36 @@ func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
 	return do.MustInvoke[*storage.LocalStorage](i)
 }
 
-func (s *Server) save(expand string, userID int) (storage.Data, error) {
+func (s *Server) save(c echo.Context, expand string) (storage.Data, error) {
+	ctx := c.Request().Context()
+
+	userIDInterface := c.Get("userID")
+	if userIDInterface == nil {
+		return storage.Data{}, errors.New("userID is missing")
+	}
+
+	userID, ok := userIDInterface.(string)
+	if !ok || userID == "" {
+		return storage.Data{}, errors.New("invalid userID format")
+	}
+
+	id, err := strconv.Atoi(userID)
+	if err != nil {
+		return storage.Data{}, errors.New("invalid user ID")
+	}
+
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
 	}
 
-	data, err := s.storage.Get(expand)
+	data, err := s.storage.Get(ctx, expand)
 
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
-		data.UUID = userID
+		data.UUID = id
 
-		err = s.storage.Save(data)
+		err = s.storage.Save(ctx, data)
 		if err != nil {
 			return storage.Data{}, errors.Wrap(err, "save error")
 		}
@@ -86,21 +105,28 @@ func (s *Server) save(expand string, userID int) (storage.Data, error) {
 	return data, errConflict
 }
 
-func (s *Server) get(short string) (storage.Data, error) {
-	data, err := s.storage.Get(short)
+func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
+	ctx := c.Request().Context()
+
+	data, err := s.storage.Get(ctx, short)
 	if err != nil {
 		return storage.Data{}, errors.Wrap(err, "get error")
 	}
 	return data, nil
 }
 
-// TODO:?
-func (s *Server) getUserURLs(userID int) ([]storage.Data, error) {
-	data, err := s.storage.GetUserURLs(userID)
+func (s *Server) getAll(c echo.Context) ([]storage.Data, error) {
+	ctx := c.Request().Context()
+	userID := c.Get("userID").(int)
+
+	data, err := s.storage.GetAll(ctx, userID)
 	if err != nil {
-		//TODO: err noContent
-		return nil, errors.Wrap(err, "get user urls error")
+		if errors.Is(err, errNoContent) {
+			return []storage.Data{}, err
+		}
+		return nil, errors.Wrap(err, "getAll error")
 	}
+
 	return data, nil
 }
 
