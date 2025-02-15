@@ -29,15 +29,13 @@ func (s *Server) create(c echo.Context) error {
 
 	body := c.Request().Body
 
+	s.logger.Infof("Received body: %v", body)
 	url, err := io.ReadAll(body)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	userID, err := s.getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Server error")
-	}
+	userID := c.Get("userID").(int)
 
 	data, err := s.save(c.Request().Context(), string(url), userID)
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
@@ -89,14 +87,12 @@ func (s *Server) createJSON(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	userID, err := s.getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Server error")
-	}
+	s.logger.Infof("Received body: %v", url)
 
-	s.logger.Infof("Creating new URL: %s", url)
+	userID := c.Get("userID").(int)
+	s.logger.Infof("User ID: %v", userID)
 
-	data, err := s.save(c, url.URL)
+	data, err := s.save(c.Request().Context(), url.URL, userID)
 
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
@@ -139,10 +135,7 @@ func (s *Server) batch(c echo.Context) error {
 		data storage.Data
 	)
 
-	userID, err := s.getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Server error")
-	}
+	userID := c.Get("userID").(int)
 
 	err = c.Bind(&reqs)
 	if err != nil {
@@ -172,12 +165,9 @@ func (s *Server) batch(c echo.Context) error {
 }
 
 func (s *Server) userURLs(c echo.Context) error {
-	_, err := s.getUserIDFromCookie(c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "Unauthorized")
-	}
+	userID := c.Get("userID").(int)
 
-	urls, err := s.getAll(c)
+	urls, err := s.getAll(c, userID)
 	if err != nil {
 		if errors.Is(err, errNoContent) {
 			return c.JSON(http.StatusNoContent, "No content")

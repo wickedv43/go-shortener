@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -22,10 +23,15 @@ func main() {
 
 	r := resty.New()
 
-	resp, err := r.R().
-		SetHeader("Content-Type", "text/plain").
-		SetBody("https://www.googxcvlkjzxhcvlkjle.com").
-		Post("http://localhost:8080/")
+	cookie := &http.Cookie{
+		Name:  "auth_token",
+		Value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mzk3NDM2MTIsInVzZXJfaWQiOjMzMjZ9.WGTa3JT4kcb_S047NY9PEKLsdJMnH10z1ZiVQAizV7w",
+	}
+
+	resp, err := r.R().SetCookie(cookie).
+		SetHeader("Content-Type", "application/json").
+		SetBody(Request{URL: "https://google.com"}).
+		Post("http://localhost:8080/api/shorten")
 	if err != nil {
 		fmt.Println(err)
 	}

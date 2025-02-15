@@ -98,13 +98,8 @@ func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 	return data, nil
 }
 
-func (s *Server) getAll(c echo.Context) ([]storage.Data, error) {
+func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	ctx := c.Request().Context()
-
-	userID, err := s.getUserIDFromCookie(c)
-	if err != nil {
-		return nil, err
-	}
 
 	data, err := s.storage.GetAll(ctx, userID)
 	if err != nil {

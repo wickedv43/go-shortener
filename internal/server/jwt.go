@@ -37,11 +37,7 @@ func (s *Server) createJWT() (string, error) {
 	return token.SignedString(secretKey)
 }
 
-func (s *Server) getUserIDFromCookie(c echo.Context) (int, error) {
-	cookie, err := c.Cookie(cookieName)
-	if err != nil {
-		return 0, errors.Wrapf(err, "get cookie %s", cookieName)
-	}
+func (s *Server) getUserIDFromCookie(cookie *http.Cookie) (int, error) {
 
 	token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
@@ -60,24 +56,40 @@ func (s *Server) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var (
 			jwtToken string
-			err      error
 		)
 
-		_, err = c.Cookie(cookieName)
+		cookie, err := c.Cookie(cookieName)
 		if err != nil {
 			jwtToken, err = s.createJWT()
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, "middleware err generate token")
 			}
 
-			c.SetCookie(&http.Cookie{
+			cookie = &http.Cookie{
 				Name:     cookieName,
 				Value:    jwtToken,
 				Path:     "/",
 				HttpOnly: true,
 				Expires:  time.Now().Add(24 * time.Hour),
-			})
+			}
+
+			c.SetCookie(cookie)
+
+			userID, err := s.getUserIDFromCookie(cookie)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, "Getting user from cookie")
+			}
+
+			c.Set("userID", userID)
 		}
+
+		userID, err := s.getUserIDFromCookie(cookie)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "Getting user from cookie")
+		}
+
+		c.Set("userID", userID)
+
 		return next(c)
 	}
 }
