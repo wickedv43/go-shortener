@@ -130,7 +130,7 @@ func (s *Server) batch(c echo.Context) error {
 
 	var (
 		reqs []batchRequest
-		resp = make([]batchResponse, 0)
+		resp []batchResponse
 		err  error
 		data storage.Data
 	)
@@ -159,8 +159,11 @@ func (s *Server) batch(c echo.Context) error {
 			ShortURL:      res,
 		}
 		resp = append(resp, r)
+		s.logger.Infof("batch response: %v", r)
+		s.logger.Infof("batch response: %v", resp)
 	}
 
+	s.logger.Infof("batch response: %v", resp)
 	return c.JSON(http.StatusCreated, resp)
 }
 
