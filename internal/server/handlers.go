@@ -178,5 +178,9 @@ func (s *Server) userURLs(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "getting data")
 	}
 
+	for _, url := range urls {
+		url.ShortURL = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, url.ShortURL)
+	}
+
 	return c.JSON(http.StatusOK, urls)
 }
