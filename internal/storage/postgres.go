@@ -105,10 +105,6 @@ func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error
 		return nil, errors.Wrap(err, "rows iteration error")
 	}
 
-	if len(data) == 0 {
-		return nil, server.ErrNoContent
-	}
-
 	return data, nil
 }
 

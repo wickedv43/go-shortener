@@ -103,10 +103,11 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 
 	data, err := s.storage.GetAll(ctx, userID)
 	if err != nil {
-		if errors.Is(err, ErrNoContent) {
-			return []storage.Data{}, err
-		}
 		return nil, errors.Wrap(err, "getAll error")
+	}
+
+	if len(data) == 0 {
+		return []storage.Data{}, ErrNoContent
 	}
 
 	return data, nil
