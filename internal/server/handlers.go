@@ -39,7 +39,6 @@ func (s *Server) create(c echo.Context) error {
 
 	data, err := s.save(c.Request().Context(), string(url), userID)
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
-	s.logger.Infof("short URL: %s for user %d", url, userID)
 
 	if err != nil {
 		if errors.Is(err, ErrConflict) {
@@ -86,8 +85,6 @@ func (s *Server) createJSON(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
-
-	s.logger.Infof("Received body: %v", url)
 
 	userID := c.Get("userID").(int)
 	s.logger.Infof("User ID: %v", userID)
@@ -178,15 +175,9 @@ func (s *Server) userURLs(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "getting data")
 	}
 
-	resp := make([]storage.Data, len(urls))
-
-	for _, url := range urls {
-		short := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, url.ShortURL)
-		url.ShortURL = short
-		resp = append(resp, url)
+	for i := range urls {
+		urls[i].ShortURL = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, urls[i].ShortURL)
 	}
 
-	s.logger.Infof("userURLs: %v", resp)
-
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, urls)
 }

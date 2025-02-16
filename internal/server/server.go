@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -108,6 +109,10 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 
 	if len(data) == 0 {
 		return []storage.Data{}, ErrNoContent
+	}
+
+	for _, d := range data {
+		d.ShortURL = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, d.ShortURL)
 	}
 
 	return data, nil
