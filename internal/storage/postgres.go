@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
-	"github.com/wickedv43/go-shortener/internal/server"
 )
 
 type PostgresStorage struct {
