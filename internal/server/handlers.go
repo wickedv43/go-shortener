@@ -11,8 +11,8 @@ import (
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
-var errConflict = errors.New("conflict")
-var errNoContent = errors.New("no content")
+var ErrConflict = errors.New("conflict")
+var ErrNoContent = errors.New("no content")
 
 type requestJSON struct {
 	URL string `json:"url"`
@@ -42,7 +42,7 @@ func (s *Server) create(c echo.Context) error {
 	s.logger.Infof("short URL: %s for user %d", url, userID)
 
 	if err != nil {
-		if errors.Is(err, errConflict) {
+		if errors.Is(err, ErrConflict) {
 			c.Response().WriteHeader(http.StatusConflict)
 			_, err = c.Response().Write([]byte(resURL))
 			return err
@@ -97,7 +97,7 @@ func (s *Server) createJSON(c echo.Context) error {
 	res.Result = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)
 
 	if err != nil {
-		if errors.Is(err, errConflict) {
+		if errors.Is(err, ErrConflict) {
 			return c.JSON(http.StatusConflict, res)
 		}
 
@@ -172,7 +172,7 @@ func (s *Server) userURLs(c echo.Context) error {
 
 	urls, err := s.getAll(c, userID)
 	if err != nil {
-		if errors.Is(err, errNoContent) {
+		if errors.Is(err, ErrNoContent) {
 			return c.JSON(http.StatusNoContent, "No content")
 		}
 		return c.JSON(http.StatusInternalServerError, "getting data")
@@ -182,6 +182,8 @@ func (s *Server) userURLs(c echo.Context) error {
 		short := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, url.ShortURL)
 		url.ShortURL = short
 	}
+
+	s.logger.Infof("userURLs: %v", urls)
 
 	return c.JSON(http.StatusOK, urls)
 }

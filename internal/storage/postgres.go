@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
+	"github.com/wickedv43/go-shortener/internal/server"
 )
 
 type PostgresStorage struct {
@@ -105,7 +106,7 @@ func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error
 	}
 
 	if len(data) == 0 {
-		return nil, errors.New("no content")
+		return nil, server.ErrNoContent
 	}
 
 	return data, nil

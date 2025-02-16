@@ -85,7 +85,7 @@ func (s *Server) save(ctx context.Context, expand string, userID int) (storage.D
 		return data, nil
 	}
 
-	return data, errConflict
+	return data, ErrConflict
 }
 
 func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
@@ -103,7 +103,7 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 
 	data, err := s.storage.GetAll(ctx, userID)
 	if err != nil {
-		if errors.Is(err, errNoContent) {
+		if errors.Is(err, ErrNoContent) {
 			return []storage.Data{}, err
 		}
 		return nil, errors.Wrap(err, "getAll error")
