@@ -98,7 +98,7 @@ func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 	return data, nil
 }
 
-func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
+func (s *Server) getAll(c echo.Context, userID int) (*[]storage.Data, error) {
 	ctx := c.Request().Context()
 
 	data, err := s.storage.GetAll(ctx, userID)
@@ -107,10 +107,10 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	}
 
 	if len(data) == 0 {
-		return []storage.Data{}, ErrNoContent
+		return &[]storage.Data{}, ErrNoContent
 	}
 
-	return data, nil
+	return &data, nil
 }
 
 func (s *Server) Start() {
