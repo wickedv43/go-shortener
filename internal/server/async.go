@@ -20,14 +20,20 @@ func (s *Server) deleteWorker() {
 
 			// Если накопили batchSize, отправляем в БД
 			if len(batch) >= batchSize {
-				s.batchDelete(batch)
+				err := s.batchDelete(batch)
+				if err != nil {
+					s.logger.Errorf("batch delete error: %v", err)
+				}
 				batch = make([]string, 0, batchSize)
 			}
 
 		case <-timer.C:
 			// Если время вышло, но есть данные, тоже отправляем
 			if len(batch) > 0 {
-				s.batchDelete(batch)
+				err := s.batchDelete(batch)
+				if err != nil {
+					s.logger.Errorf("batch delete error: %v", err)
+				}
 				batch = make([]string, 0, batchSize)
 			}
 			timer.Reset(flushInterval)

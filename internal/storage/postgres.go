@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
@@ -111,13 +112,12 @@ func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
-func (s *PostgresStorage) Delete(ctx context.Context, userID int, url string) error {
+func (s *PostgresStorage) BatchDelete(shorts []string) error {
 	query := `UPDATE urls 
 	SET is_deleted = true 
-	WHERE (short_url = $1 OR original_url = $1) 
-	AND uuid = $2;`
+	WHERE short_url = ANY($1);`
 
-	result, err := s.pgDB.ExecContext(ctx, query, url, userID)
+	result, err := s.pgDB.Exec(query, pq.Array(shorts))
 	if err != nil {
 		return err
 	}

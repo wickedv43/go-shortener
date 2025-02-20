@@ -61,6 +61,7 @@ func (s *Server) create(c echo.Context) error {
 	return nil
 }
 
+// TODO: add 410 err
 func (s *Server) getShort(c echo.Context) error {
 	s.logger.Infof("Getting URL: %s", c.Request().URL)
 	short := c.Param("short")
@@ -68,6 +69,10 @@ func (s *Server) getShort(c echo.Context) error {
 	data, err := s.get(c, short)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Server error")
+	}
+
+	if data.DeletedFlag {
+		return c.JSON(http.StatusGone, "Gone")
 	}
 
 	c.Response().Header().Set("Location", data.OriginalURL)
@@ -190,19 +195,25 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 	}
 
 	//userID check
-	userID := c.Get("userID").(int)
-	data, err := s.getAll(c, userID)
-	if err != nil {
-		if errors.Is(err, ErrNoContent) {
-			return c.JSON(http.StatusNoContent, "No content")
-		}
-		return c.JSON(http.StatusInternalServerError, "getting data")
-	}
-
 	okShorts := make([]string, 0)
 
-	// Отправляем каждый ID в канал для обработки
+	userID := c.Get("userID").(int)
+
 	for _, short := range shorts {
+		var d storage.Data
+
+		d, err = s.get(c, short)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "server error")
+		}
+
+		if !d.DeletedFlag && d.UUID == userID {
+			okShorts = append(okShorts, short)
+		}
+	}
+
+	// send to chan
+	for _, short := range okShorts {
 		s.urlDeleteChan <- short
 	}
 

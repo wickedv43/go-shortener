@@ -63,15 +63,19 @@ func (l *LocalStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (l *LocalStorage) Delete(_ context.Context, userID int, url string) error {
-	for i, data := range l.locMem {
-		if !data.DeletedFlag && data.UUID == userID {
-			if data.OriginalURL == url || data.ShortURL == url {
-				l.locMem[i].DeletedFlag = true
+// bad var for in for
+func (l *LocalStorage) BatchDelete(shorts []string) error {
+	for _, short := range shorts {
+		for i, data := range l.locMem {
+			if !data.DeletedFlag {
+				if data.OriginalURL == short || data.ShortURL == short {
+					l.locMem[i].DeletedFlag = true
+				}
 			}
-		}
 
+		}
 	}
+
 	return nil
 }
 

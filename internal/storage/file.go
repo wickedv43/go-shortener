@@ -120,7 +120,7 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (s *FileStorage) Delete(c context.Context, userID int, url string) error {
+func (s *FileStorage) BatchDelete(shorts []string) error {
 	data := make([]Data, 0)
 
 	file, err := s.Open()
@@ -132,33 +132,35 @@ func (s *FileStorage) Delete(c context.Context, userID int, url string) error {
 	scanner := bufio.NewScanner(file)
 
 	//read data from file
-	for scanner.Scan() {
-		var d Data
-		line := scanner.Bytes()
+	for _, short := range shorts {
+		for scanner.Scan() {
+			var d Data
+			line := scanner.Bytes()
 
-		if len(line) == 0 {
-			continue
-		}
-
-		if err = json.Unmarshal(line, &d); err != nil {
-			return errors.Wrap(err, "unmarshal data")
-		}
-
-		s.log.WithField("scan", d).Info("scanning line")
-
-		//if user's data delete it
-		if !d.DeletedFlag && d.UUID == userID {
-			if d.ShortURL == url || d.OriginalURL == url {
-				d.DeletedFlag = true
+			if len(line) == 0 {
+				continue
 			}
+
+			if err = json.Unmarshal(line, &d); err != nil {
+				return errors.Wrap(err, "unmarshal data")
+			}
+
+			s.log.WithField("scan", d).Info("scanning line")
+
+			//if user's data delete it
+			if !d.DeletedFlag {
+				if d.ShortURL == short || d.OriginalURL == short {
+					d.DeletedFlag = true
+				}
+			}
+
+			//append all data to slice
+			data = append(data, d)
 		}
 
-		//append all data to slice
-		data = append(data, d)
-	}
-
-	if err = scanner.Err(); err != nil {
-		return errors.Wrap(err, "scan file")
+		if err = scanner.Err(); err != nil {
+			return errors.Wrap(err, "scan file")
+		}
 	}
 
 	if len(data) == 0 {
@@ -172,8 +174,10 @@ func (s *FileStorage) Delete(c context.Context, userID int, url string) error {
 	}
 
 	//rewrite data
+	ctx := context.Background()
+
 	for _, d := range data {
-		err = s.Save(c, d)
+		err = s.Save(ctx, d)
 		if err != nil {
 			return errors.Wrap(err, "save file")
 		}
