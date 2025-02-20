@@ -63,10 +63,12 @@ func (l *LocalStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (l *LocalStorage) Delete(_ context.Context, url string) error {
+func (l *LocalStorage) Delete(_ context.Context, userID int, url string) error {
 	for i, data := range l.locMem {
-		if data.OriginalURL == url {
-			l.locMem = append(l.locMem[:i], l.locMem[i+1:]...)
+		if !data.DeletedFlag && data.UUID == userID {
+			if data.OriginalURL == url || data.ShortURL == url {
+				l.locMem[i].DeletedFlag = true
+			}
 		}
 
 	}

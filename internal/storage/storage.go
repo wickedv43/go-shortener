@@ -10,13 +10,14 @@ type Data struct {
 	UUID        int    `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	DeletedFlag bool   `json:"is_deleted"`
 }
 
 type DataKeeper interface {
 	Save(c context.Context, d Data) error
 	Get(c context.Context, s string) (Data, error)
 	GetAll(c context.Context, userID int) ([]Data, error)
-	Delete(c context.Context, s string) error
+	Delete(c context.Context, userID int, s string) error
 
 	HealthCheck() error
 

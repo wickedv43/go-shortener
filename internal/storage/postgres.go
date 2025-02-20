@@ -111,13 +111,23 @@ func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
-func (s *PostgresStorage) Delete(ctx context.Context, url string) error {
-	query := `DELETE FROM urls WHERE short_url = $1 OR original_url = $1 RETURNING uuid`
+func (s *PostgresStorage) Delete(ctx context.Context, userID int, url string) error {
+	query := `UPDATE urls 
+	SET is_deleted = true 
+	WHERE (short_url = $1 OR original_url = $1) 
+	AND uuid = $2;`
 
-	var uuid int
-	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&uuid)
+	result, err := s.pgDB.ExecContext(ctx, query, url, userID)
+	if err != nil {
+		return err
+	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
 		return errors.New("not found")
 	}
 

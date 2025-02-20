@@ -166,7 +166,6 @@ func (s *Server) batch(c echo.Context) error {
 
 func (s *Server) userURLs(c echo.Context) error {
 	userID := c.Get("userID").(int)
-
 	urls, err := s.getAll(c, userID)
 	if err != nil {
 		if errors.Is(err, ErrNoContent) {
@@ -180,4 +179,33 @@ func (s *Server) userURLs(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, urls)
+}
+
+func (s *Server) deleteUserURLs(c echo.Context) error {
+	var shorts []string
+
+	err := c.Bind(&shorts)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "server error")
+	}
+
+	//userID check
+	userID := c.Get("userID").(int)
+	data, err := s.getAll(c, userID)
+	if err != nil {
+		if errors.Is(err, ErrNoContent) {
+			return c.JSON(http.StatusNoContent, "No content")
+		}
+		return c.JSON(http.StatusInternalServerError, "getting data")
+	}
+
+	okShorts := make([]string, 0)
+
+	// Отправляем каждый ID в канал для обработки
+	for _, short := range shorts {
+		s.urlDeleteChan <- short
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
+
 }

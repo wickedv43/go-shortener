@@ -20,6 +20,9 @@ type Server struct {
 	cfg     *config.Config
 	storage storage.DataKeeper
 	logger  *logrus.Entry
+
+	//channels
+	urlDeleteChan chan string
 }
 
 func NewServer(i do.Injector) (*Server, error) {
@@ -34,8 +37,9 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
 
-	s.storage = s.SelectStorage(i)
+	s.storage = s.selectStorage(i)
 
+	//routes
 	s.echo.POST(`/`, s.create)
 	s.echo.GET(`/:short`, s.getShort)
 
@@ -45,11 +49,18 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.echo.POST(`/api/shorten/batch`, s.batch)
 
 	s.echo.GET(`/api/user/urls`, s.userURLs)
+	s.echo.DELETE(`/api/user/urls`, s.deleteUserURLs)
+
+	//channels
+	s.urlDeleteChan = make(chan string, 100)
+
+	//workers
+	go s.deleteWorker()
 
 	return s, nil
 }
 
-func (s *Server) SelectStorage(i do.Injector) storage.DataKeeper {
+func (s *Server) selectStorage(i do.Injector) storage.DataKeeper {
 	var err error
 
 	if _, err = do.Invoke[*storage.PostgresStorage](i); err == nil {

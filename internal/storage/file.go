@@ -120,7 +120,65 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (s *FileStorage) Delete(_ context.Context, _ string) error {
+func (s *FileStorage) Delete(c context.Context, userID int, url string) error {
+	data := make([]Data, 0)
+
+	file, err := s.Open()
+	if err != nil {
+		return errors.Wrap(err, "open file")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	//read data from file
+	for scanner.Scan() {
+		var d Data
+		line := scanner.Bytes()
+
+		if len(line) == 0 {
+			continue
+		}
+
+		if err = json.Unmarshal(line, &d); err != nil {
+			return errors.Wrap(err, "unmarshal data")
+		}
+
+		s.log.WithField("scan", d).Info("scanning line")
+
+		//if user's data delete it
+		if !d.DeletedFlag && d.UUID == userID {
+			if d.ShortURL == url || d.OriginalURL == url {
+				d.DeletedFlag = true
+			}
+		}
+
+		//append all data to slice
+		data = append(data, d)
+	}
+
+	if err = scanner.Err(); err != nil {
+		return errors.Wrap(err, "scan file")
+	}
+
+	if len(data) == 0 {
+		return errors.New("empty file")
+	}
+
+	//rm file for rewrite new data
+	err = s.RemoveFile()
+	if err != nil {
+		return errors.Wrap(err, "remove file")
+	}
+
+	//rewrite data
+	for _, d := range data {
+		err = s.Save(c, d)
+		if err != nil {
+			return errors.Wrap(err, "save file")
+		}
+	}
+
 	return nil
 }
 
@@ -170,6 +228,12 @@ func (s *FileStorage) Save(_ context.Context, d Data) error {
 	return nil
 }
 
+// Open or Create file
 func (s *FileStorage) Open() (*os.File, error) {
 	return os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+}
+
+// RemoveFile remove file
+func (s *FileStorage) RemoveFile() error {
+	return os.Remove(s.cfg.Server.FlagStoragePath)
 }
