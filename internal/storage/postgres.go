@@ -61,11 +61,6 @@ func (s *PostgresStorage) Save(ctx context.Context, d Data) error {
 		return errors.Wrap(err, "save to postgres")
 	}
 
-	s.log.WithFields(logrus.Fields{
-		"url":   d.OriginalURL,
-		"short": d.ShortURL,
-	}).Infoln("saved to postgres")
-
 	return nil
 }
 

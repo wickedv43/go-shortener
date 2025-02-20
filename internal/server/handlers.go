@@ -29,7 +29,6 @@ func (s *Server) create(c echo.Context) error {
 
 	body := c.Request().Body
 
-	s.logger.Infof("Received body: %v", body)
 	url, err := io.ReadAll(body)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Server error")
@@ -92,7 +91,6 @@ func (s *Server) createJSON(c echo.Context) error {
 	}
 
 	userID := c.Get("userID").(int)
-	s.logger.Infof("User ID: %v", userID)
 
 	data, err := s.save(c.Request().Context(), url.URL, userID)
 
