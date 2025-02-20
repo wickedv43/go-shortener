@@ -222,11 +222,6 @@ func (s *FileStorage) Save(_ context.Context, d Data) error {
 		return errors.Wrap(err, "write data")
 	}
 
-	s.log.WithFields(logrus.Fields{
-		"url":   d.OriginalURL,
-		"short": d.ShortURL,
-	}).Infof("saved to file: %s", s.cfg.Server.FlagStoragePath)
-
 	return nil
 }
 
