@@ -194,6 +194,11 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "server error")
 	}
 
+	err = c.JSON(http.StatusGone, nil)
+	if err != nil {
+		s.logger.Error(err)
+	}
+
 	//userID check
 	okShorts := make([]string, 0)
 
@@ -217,6 +222,6 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 		s.urlDeleteChan <- short
 	}
 
-	return c.JSON(http.StatusAccepted, nil)
+	return nil
 
 }
