@@ -191,10 +191,8 @@ func (s *FileStorage) HealthCheck() error {
 	if err != nil {
 		return errors.Wrap(err, "open file")
 	}
-	err = s.Close()
-	if err != nil {
-		return errors.Wrap(err, "close file")
-	}
+	defer s.file.Close()
+
 	return nil
 }
 

@@ -110,8 +110,9 @@ func (s *Server) createJSON(c echo.Context) error {
 
 func (s *Server) ping(c echo.Context) error {
 	err := s.storage.HealthCheck()
+	s.logger.Info(err)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
 	return c.JSON(http.StatusOK, nil)
