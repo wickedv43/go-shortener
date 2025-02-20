@@ -17,7 +17,7 @@ type DataKeeper interface {
 	Save(c context.Context, d Data) error
 	Get(c context.Context, s string) (Data, error)
 	GetAll(c context.Context, userID int) ([]Data, error)
-	BatchDelete(shorts []string) error
+	BatchDelete(shorts ...string) error
 
 	HealthCheck() error
 

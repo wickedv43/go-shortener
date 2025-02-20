@@ -193,7 +193,8 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "server error")
 	}
 
-	err = c.JSON(http.StatusGone, nil)
+	//send resp
+	err = c.JSON(http.StatusAccepted, nil)
 	if err != nil {
 		s.logger.Error(err)
 	}
@@ -216,10 +217,24 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 		}
 	}
 
-	// send to chan
-	for _, short := range okShorts {
-		s.urlDeleteChan <- short
-	}
+	//create chans
+	ch1 := make(chan string, len(shorts))
+	ch2 := make(chan string, len(shorts))
+
+	go func() {
+		defer close(ch1)
+		defer close(ch2)
+		for i, short := range okShorts {
+			if i%2 == 0 {
+				ch1 <- short
+			} else {
+				ch2 <- short
+			}
+		}
+	}()
+
+	s.deleteWorker(ch1)
+	s.deleteWorker(ch2)
 
 	return nil
 

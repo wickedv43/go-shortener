@@ -20,9 +20,6 @@ type Server struct {
 	cfg     *config.Config
 	storage storage.DataKeeper
 	logger  *logrus.Entry
-
-	//channels
-	urlDeleteChan chan string
 }
 
 func NewServer(i do.Injector) (*Server, error) {
@@ -50,12 +47,6 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	s.echo.GET(`/api/user/urls`, s.userURLs)
 	s.echo.DELETE(`/api/user/urls`, s.deleteUserURLs)
-
-	//channels
-	s.urlDeleteChan = make(chan string, 100)
-
-	//workers
-	go s.deleteWorker()
 
 	return s, nil
 }
@@ -129,8 +120,8 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	return data, nil
 }
 
-func (s *Server) batchDelete(shorts []string) error {
-	return s.storage.BatchDelete(shorts)
+func (s *Server) batchDelete(shorts ...string) error {
+	return s.storage.BatchDelete(shorts...)
 }
 
 func (s *Server) Start() {
