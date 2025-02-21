@@ -7,7 +7,7 @@ func (s *Server) deleteWorker(inCh chan string) chan string {
 		for short := range inCh {
 			err := s.batchDelete(short)
 			if err != nil {
-				s.logger.Errorf("batch delete error: %v", err)
+				s.logger.Errorf("delete error: %v", err)
 			}
 		}
 	}()
