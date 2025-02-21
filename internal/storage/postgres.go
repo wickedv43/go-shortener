@@ -68,7 +68,7 @@ func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 
 	query := `SELECT uuid, original_url, short_url, is_deleted FROM urls WHERE short_url = $1 OR original_url = $1`
 
-	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL)
+	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL, &data.DeletedFlag)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Data{}, errors.New("not found")
 	}
