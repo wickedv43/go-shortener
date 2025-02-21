@@ -218,23 +218,12 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 	}
 
 	//create chans
-	ch1 := make(chan string, len(shorts))
-	ch2 := make(chan string, len(shorts))
-
-	go func() {
-		defer close(ch1)
-		defer close(ch2)
-		for i, short := range okShorts {
-			if i%2 == 0 {
-				ch1 <- short
-			} else {
-				ch2 <- short
-			}
-		}
-	}()
-
-	s.deleteWorker(ch1)
-	s.deleteWorker(ch2)
+	inCh := s.gen(okShorts...)
+	ch1 := s.delete(inCh)
+	ch2 := s.delete(inCh)
+	for n := range s.fanIn(ch1, ch2) {
+		s.logger.Info(n)
+	}
 
 	return nil
 
