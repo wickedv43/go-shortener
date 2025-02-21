@@ -128,6 +128,10 @@ func (s *PostgresStorage) BatchDelete(short string) error {
 		return errors.New("not found or already deleted")
 	}
 
+	if err = rows.Err(); err != nil {
+		return errors.Wrap(err, "rows iteration error")
+	}
+
 	s.log.Infof("Deleted %d urls", count)
 	return nil
 }
