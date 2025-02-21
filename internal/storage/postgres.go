@@ -108,7 +108,7 @@ func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
-func (s *PostgresStorage) BatchDelete(short ...string) error {
+func (s *PostgresStorage) BatchDelete(short []string) error {
 	query := `UPDATE urls 
           SET is_deleted = true 
           WHERE short_url = ANY($1) AND is_deleted = false
