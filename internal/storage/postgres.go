@@ -127,6 +127,7 @@ func (s *PostgresStorage) BatchDelete(shorts ...string) error {
 		return errors.New("not found")
 	}
 
+	s.log.Infof("deleted %d urls", rowsAffected)
 	return nil
 }
 

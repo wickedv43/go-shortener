@@ -62,7 +62,6 @@ func (s *Server) create(c echo.Context) error {
 
 // TODO: add 410 err
 func (s *Server) getShort(c echo.Context) error {
-	s.logger.Infof("Getting URL: %s", c.Request().URL)
 	short := c.Param("short")
 
 	data, err := s.get(c, short)
@@ -70,6 +69,7 @@ func (s *Server) getShort(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
+	s.logger.Info(data)
 	if data.DeletedFlag {
 		return c.JSON(http.StatusGone, "Gone")
 	}
