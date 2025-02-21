@@ -49,7 +49,6 @@ func (s *Server) delete(inCh chan string) chan string {
 
 				batch = append(batch, short)
 
-				// Если набралось `batchSize`, отправляем в `batchDelete`
 				if len(batch) >= batchSize {
 					err := s.batchDelete(batch)
 					if err != nil {
@@ -59,7 +58,7 @@ func (s *Server) delete(inCh chan string) chan string {
 					for _, url := range batch {
 						outCh <- fmt.Sprintf("deleted: %s", url)
 					}
-					batch = nil // Очищаем batch
+					batch = nil
 				}
 
 			case <-timer.C:

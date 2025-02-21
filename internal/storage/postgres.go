@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
@@ -113,7 +114,7 @@ func (s *PostgresStorage) BatchDelete(short ...string) error {
           WHERE short_url = ANY($1) AND is_deleted = false
           RETURNING short_url;`
 
-	rows, err := s.pgDB.Query(query, short)
+	rows, err := s.pgDB.Query(query, pq.Array(short))
 	if err != nil {
 		return errors.Wrap(err, "batch delete")
 	}
