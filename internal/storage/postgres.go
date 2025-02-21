@@ -115,7 +115,7 @@ func (s *PostgresStorage) BatchDelete(short string) error {
 
 	rows, err := s.pgDB.Query(query, short)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "batch delete")
 	}
 	defer rows.Close()
 
