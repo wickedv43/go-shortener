@@ -108,44 +108,27 @@ func (s *PostgresStorage) HealthCheck() error {
 }
 
 func (s *PostgresStorage) BatchDelete(short string) error {
-	tx, err := s.pgDB.Begin()
+	query := `UPDATE urls 
+          SET is_deleted = true 
+          WHERE short_url = $1 AND is_deleted = false
+          RETURNING short_url;`
+
+	rows, err := s.pgDB.Query(query, short)
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
-	query := `SELECT short_url FROM urls WHERE short_url = $1 FOR UPDATE;`
-	err = tx.QueryRow(query, short).Scan(&short)
-	if err != nil {
-		tx.Rollback()
-		return err
+	var count int
+	for rows.Next() {
+		count++
 	}
 
-	updateQuery := `UPDATE urls 
-	                SET is_deleted = true 
-	                WHERE short_url = $1 AND is_deleted = false;`
-
-	result, err := tx.Exec(updateQuery, short)
-	if err != nil {
-		tx.Rollback()
-		return err
+	if count == 0 {
+		return errors.New("not found or already deleted")
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if rowsAffected == 0 {
-		tx.Rollback()
-		return errors.New("not found")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	s.log.Infof("Deleted %d urls", rowsAffected)
+	s.log.Infof("Deleted %d urls", count)
 	return nil
 }
 
