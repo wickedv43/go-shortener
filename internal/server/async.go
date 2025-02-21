@@ -40,9 +40,9 @@ func (s *Server) delete(inCh chan string) chan string {
 						if err != nil {
 							s.logger.Errorf("failed to delete batch: %v", err)
 						}
-						for _, url := range batch {
-							outCh <- fmt.Sprintf("deleted: %s", url)
-						}
+
+						outCh <- fmt.Sprintf("deleted %d urls", len(batch))
+
 					}
 					return
 				}
@@ -55,10 +55,9 @@ func (s *Server) delete(inCh chan string) chan string {
 						s.logger.Errorf("failed to delete batch: %v", err)
 					}
 
-					for _, url := range batch {
-						outCh <- fmt.Sprintf("deleted: %s", url)
-					}
-					batch = nil
+					outCh <- fmt.Sprintf("deleted %d urls", len(batch))
+
+					batch = []string{}
 				}
 
 			case <-timer.C:
@@ -68,10 +67,9 @@ func (s *Server) delete(inCh chan string) chan string {
 						s.logger.Errorf("failed to delete batch: %v", err)
 					}
 
-					for _, url := range batch {
-						outCh <- fmt.Sprintf("deleted: %s", url)
-					}
-					batch = nil
+					outCh <- fmt.Sprintf("deleted %d urls", len(batch))
+
+					batch = []string{}
 				}
 			}
 		}
