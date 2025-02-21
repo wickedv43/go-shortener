@@ -120,8 +120,8 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	return data, nil
 }
 
-func (s *Server) batchDelete(shorts string) error {
-	return s.storage.BatchDelete(shorts)
+func (s *Server) batchDelete(shorts []string) error {
+	return s.storage.BatchDelete(shorts...)
 }
 
 func (s *Server) Start() {

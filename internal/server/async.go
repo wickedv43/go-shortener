@@ -3,7 +3,10 @@ package server
 import (
 	"fmt"
 	"sync"
+	"time"
 )
+
+const batchSize = 10
 
 func (s *Server) gen(shorts ...string) chan string {
 	outCh := make(chan string)
@@ -19,14 +22,59 @@ func (s *Server) gen(shorts ...string) chan string {
 
 func (s *Server) delete(inCh chan string) chan string {
 	outCh := make(chan string)
+
+	timer := time.NewTicker(2 * time.Second)
+	defer timer.Stop()
+
 	go func() {
 		defer close(outCh)
-		for short := range inCh {
-			err := s.batchDelete(short)
-			if err != nil {
-				s.logger.Error(err)
+		var batch []string
+
+		for {
+			select {
+			case short, ok := <-inCh:
+				if !ok {
+					//chan closed
+					if len(batch) > 0 {
+						err := s.batchDelete(batch)
+						if err != nil {
+							s.logger.Errorf("failed to delete batch: %v", err)
+						}
+						for _, url := range batch {
+							outCh <- fmt.Sprintf("deleted: %s", url)
+						}
+					}
+					return
+				}
+
+				batch = append(batch, short)
+
+				// Если набралось `batchSize`, отправляем в `batchDelete`
+				if len(batch) >= batchSize {
+					err := s.batchDelete(batch)
+					if err != nil {
+						s.logger.Errorf("failed to delete batch: %v", err)
+					}
+
+					for _, url := range batch {
+						outCh <- fmt.Sprintf("deleted: %s", url)
+					}
+					batch = nil // Очищаем batch
+				}
+
+			case <-timer.C:
+				if len(batch) > 0 {
+					err := s.batchDelete(batch)
+					if err != nil {
+						s.logger.Errorf("failed to delete batch: %v", err)
+					}
+
+					for _, url := range batch {
+						outCh <- fmt.Sprintf("deleted: %s", url)
+					}
+					batch = nil
+				}
 			}
-			outCh <- fmt.Sprintf("deleted: %s", short)
 		}
 	}()
 
