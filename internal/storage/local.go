@@ -64,7 +64,7 @@ func (l *LocalStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 }
 
 // bad var for in for
-func (l *LocalStorage) BatchDelete(shorts ...string) error {
+func (l *LocalStorage) BatchDelete(short string) error {
 	//for _, short := range shorts {
 	//	for i, data := range l.locMem {
 	//		if !data.DeletedFlag {

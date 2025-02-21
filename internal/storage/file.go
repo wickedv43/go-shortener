@@ -120,7 +120,7 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (s *FileStorage) BatchDelete(shorts ...string) error {
+func (s *FileStorage) BatchDelete(short string) error {
 	//data := make([]Data, 0)
 	//
 	//file, err := s.Open()
