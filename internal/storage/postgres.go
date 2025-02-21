@@ -66,7 +66,7 @@ func (s *PostgresStorage) Save(ctx context.Context, d Data) error {
 func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 	var data Data
 
-	query := `SELECT uuid, original_url, short_url FROM urls WHERE short_url = $1 OR original_url = $1`
+	query := `SELECT uuid, original_url, short_url, is_deleted FROM urls WHERE short_url = $1 OR original_url = $1`
 
 	err := s.pgDB.QueryRowContext(ctx, query, url).Scan(&data.UUID, &data.OriginalURL, &data.ShortURL)
 	if errors.Is(err, sql.ErrNoRows) {
