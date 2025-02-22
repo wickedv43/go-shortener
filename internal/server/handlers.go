@@ -34,7 +34,11 @@ func (s *Server) create(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	userID := c.Get("userID").(int)
+	val := c.Get("userID")
+	userID, ok := val.(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, "userID is not of type int")
+	}
 
 	data, err := s.save(c.Request().Context(), string(url), userID)
 	resURL := fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, data.ShortURL)

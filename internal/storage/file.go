@@ -120,69 +120,7 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
-func (s *FileStorage) BatchDelete(short []string) error {
-	//data := make([]Data, 0)
-	//
-	//file, err := s.Open()
-	//if err != nil {
-	//	return errors.Wrap(err, "open file")
-	//}
-	//defer file.Close()
-	//
-	//scanner := bufio.NewScanner(file)
-	//
-	////read data from file
-	//for _, short := range shorts {
-	//	for scanner.Scan() {
-	//		var d Data
-	//		line := scanner.Bytes()
-	//
-	//		if len(line) == 0 {
-	//			continue
-	//		}
-	//
-	//		if err = json.Unmarshal(line, &d); err != nil {
-	//			return errors.Wrap(err, "unmarshal data")
-	//		}
-	//
-	//		s.log.WithField("scan", d).Info("scanning line")
-	//
-	//		//if user's data delete it
-	//		if !d.DeletedFlag {
-	//			if d.ShortURL == short || d.OriginalURL == short {
-	//				d.DeletedFlag = true
-	//			}
-	//		}
-	//
-	//		//append all data to slice
-	//		data = append(data, d)
-	//	}
-	//
-	//	if err = scanner.Err(); err != nil {
-	//		return errors.Wrap(err, "scan file")
-	//	}
-	//}
-	//
-	//if len(data) == 0 {
-	//	return errors.New("empty file")
-	//}
-	//
-	////rm file for rewrite new data
-	//err = s.RemoveFile()
-	//if err != nil {
-	//	return errors.Wrap(err, "remove file")
-	//}
-	//
-	////rewrite data
-	//ctx := context.Background()
-	//
-	//for _, d := range data {
-	//	err = s.Save(ctx, d)
-	//	if err != nil {
-	//		return errors.Wrap(err, "save file")
-	//	}
-	//}
-
+func (s *FileStorage) BatchDelete(_ []string) error {
 	return nil
 }
 
