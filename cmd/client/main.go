@@ -1,29 +1,40 @@
 package main
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/go-resty/resty/v2"
 )
+
+type Request struct {
+	URL string `json:"url"`
+}
+
+type Response struct {
+	Result string `json:"result"`
+}
 
 // task post
 // common post for test
 func main() {
-	client := &http.Client{}
 
-	body := "https://practicum.yandex.ru/"
+	r := resty.New()
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader([]byte(body)))
-	if err != nil {
-		err = errors.New("client post")
-		fmt.Println(err)
+	cookie := &http.Cookie{
+		Name:  "auth_token",
+		Value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mzk3NDM2MTIsInVzZXJfaWQiOjMzMjZ9.WGTa3JT4kcb_S047NY9PEKLsdJMnH10z1ZiVQAizV7w",
 	}
-	req.Header.Set("Content-Type", "text/plain")
 
-	res, err := client.Do(req)
+	resp, err := r.R().SetCookie(cookie).Get("http://localhost:8080/api/user/urls")
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer res.Body.Close()
+
+	fmt.Println("--------------------")
+	fmt.Println(string(resp.Body()))
+	fmt.Println("--------------------")
+	fmt.Println(resp.StatusCode(), resp.Header().Get("Content-Encoding"), resp.Header().Get("Location"))
+	fmt.Println(resp.Cookies())
+
 }
