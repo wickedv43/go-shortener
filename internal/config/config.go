@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"github.com/wickedv43/go-shortener/internal/logger"
 
 	"github.com/samber/do/v2"
@@ -33,9 +34,17 @@ type Logger struct {
 }
 
 func NewConfig(i do.Injector) (*Config, error) {
-	var cfg Config
+	cfg, err := do.InvokeStruct[Config](i)
+	if err != nil {
+		return nil, errors.Wrap(err, "invoke config")
+	}
 
-	cfg.log = do.MustInvoke[*logger.Logger](i).WithField("component", "config")
+	log, err := do.Invoke[*logger.Logger](i)
+	if err != nil {
+		return cfg, err
+	}
+
+	cfg.log = log.WithField("component", "config")
 
 	//flags
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
@@ -44,7 +53,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 	flag.Parse()
 
-	err := godotenv.Load()
+	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
 	}
@@ -70,5 +79,5 @@ func NewConfig(i do.Injector) (*Config, error) {
 		cfg.Server.FlagDatabaseDSN = DatabaseDSN
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }

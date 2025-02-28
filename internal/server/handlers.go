@@ -64,7 +64,6 @@ func (s *Server) create(c echo.Context) error {
 	return nil
 }
 
-// TODO: add 410 err
 func (s *Server) getShort(c echo.Context) error {
 	short := c.Param("short")
 
@@ -94,7 +93,11 @@ func (s *Server) createJSON(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	userID := c.Get("userID").(int)
+	val := c.Get("userID")
+	userID, ok := val.(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, "userID is not of type int")
+	}
 
 	data, err := s.save(c.Request().Context(), url.URL, userID)
 
@@ -140,7 +143,11 @@ func (s *Server) batch(c echo.Context) error {
 		data storage.Data
 	)
 
-	userID := c.Get("userID").(int)
+	val := c.Get("userID")
+	userID, ok := val.(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, "userID is not of type int")
+	}
 
 	err = c.Bind(&reqs)
 	if err != nil {
@@ -173,7 +180,12 @@ func (s *Server) batch(c echo.Context) error {
 }
 
 func (s *Server) userURLs(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	val := c.Get("userID")
+	userID, ok := val.(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, "userID is not of type int")
+	}
+
 	urls, err := s.getAll(c, userID)
 	if err != nil {
 		if errors.Is(err, ErrNoContent) {
@@ -206,7 +218,11 @@ func (s *Server) deleteUserURLs(c echo.Context) error {
 	//userID check
 	okShorts := make([]string, 0)
 
-	userID := c.Get("userID").(int)
+	val := c.Get("userID")
+	userID, ok := val.(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, "userID is not of type int")
+	}
 
 	for _, short := range shorts {
 		var d storage.Data

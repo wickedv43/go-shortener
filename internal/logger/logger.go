@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -9,12 +10,14 @@ type Logger struct {
 	*logrus.Logger
 }
 
-func NewLogger(_ do.Injector) (*Logger, error) {
+func NewLogger(i do.Injector) (*Logger, error) {
+	logger, err := do.InvokeStruct[Logger](i)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invoke logger")
+	}
 
-	log := logrus.New()
-	log.SetLevel(logrus.InfoLevel)
+	logger.Logger = logrus.New()
+	logger.Logger.SetLevel(logrus.InfoLevel)
 
-	return &Logger{
-		log,
-	}, nil
+	return logger, nil
 }
