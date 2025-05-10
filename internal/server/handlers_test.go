@@ -19,10 +19,10 @@ import (
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
-func setupTestServer(t *testing.T, configureMock func(*mocks.MockDataKeeper)) *Server {
-	t.Helper()
+func setupTestServer(tb testing.TB, configureMock func(*mocks.MockDataKeeper)) *Server {
+	tb.Helper()
 
-	ctrl := gomock.NewController(t)
+	ctrl := gomock.NewController(tb)
 
 	container := do.New()
 
