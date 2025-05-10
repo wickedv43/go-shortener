@@ -5,3 +5,7 @@ tasks:
     go run ./cmd/shortener/.
   post:
     go run ./cmd/client/.
+
+
+  mock:
+    mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
