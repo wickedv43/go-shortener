@@ -51,7 +51,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
-
+	flag.Parse()
 	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
