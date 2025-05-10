@@ -34,6 +34,8 @@ func TestAuthMiddleware_NewCookie(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	cookies := rec.Result().Cookies()
+	defer rec.Result().Body.Close()
+
 	require.Len(t, cookies, 1)
 	require.Equal(t, cookieName, cookies[0].Name)
 	require.NotEmpty(t, cookies[0].Value)
