@@ -26,7 +26,9 @@ func setupTestServer(t *testing.T, configureMock func(*mocks.MockDataKeeper)) *S
 
 	container := do.New()
 
-	do.Provide(container, config.NewConfig)
+	do.Provide(container, func(i do.Injector) (*config.Config, error) {
+		return &config.Config{Server: config.Server{FlagRunAddr: ":8080"}}, nil
+	})
 	do.Provide(container, logger.NewLogger)
 
 	mockKeeper := mocks.NewMockDataKeeper(ctrl)
