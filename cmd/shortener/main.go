@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"syscall"
 
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	flag.Parse()
 	// provide part
 	i := do.New()
 
@@ -19,13 +21,43 @@ func main() {
 	do.Provide(i, config.NewConfig)
 	do.Provide(i, logger.NewLogger)
 
+	log := do.MustInvoke[*logger.Logger](i)
 	//storages
-	do.Provide(i, storage.NewLocalStorage)
-	do.Provide(i, storage.NewFileStorage)
-	do.Provide(i, storage.NewPostgresStorage)
+	if err := provideStorageByPriority(i); err != nil {
+		log.Error("failed to choose storage:", err)
+	}
 
-	do.MustInvoke[*logger.Logger](i)
 	do.MustInvoke[*server.Server](i).Start()
 
 	i.ShutdownOnSignals(syscall.SIGTERM, os.Interrupt)
+}
+
+func provideStorageByPriority(i do.Injector) error {
+	log := do.MustInvoke[*logger.Logger](i).WithField("component", "storage")
+
+	// Пробуем Postgres
+	if s, err := do.Invoke[*storage.PostgresStorage](i); err == nil {
+		log.Info("using postgres storage")
+		do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
+			return s, nil
+		})
+		return nil
+	}
+
+	// Пробуем файл
+	if s, err := do.Invoke[*storage.FileStorage](i); err == nil {
+		log.Info("using file storage")
+		do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
+			return s, nil
+		})
+		return nil
+	}
+
+	// Fallback: память
+	s := do.MustInvoke[*storage.LocalStorage](i)
+	log.Info("using memory storage")
+	do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
+		return s, nil
+	})
+	return nil
 }

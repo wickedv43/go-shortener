@@ -34,7 +34,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
 
-	s.storage = s.selectStorage(i)
+	s.storage = do.MustInvoke[storage.DataKeeper](i)
 
 	//routes
 	s.echo.POST(`/`, s.create)
@@ -49,24 +49,6 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.echo.DELETE(`/api/user/urls`, s.deleteUserURLs)
 
 	return s, nil
-}
-
-func (s *Server) selectStorage(i do.Injector) storage.DataKeeper {
-	var err error
-
-	if _, err = do.Invoke[*storage.PostgresStorage](i); err == nil {
-		s.logger.WithField("component", "postgres").Debug("using postgres storage")
-		return do.MustInvoke[*storage.PostgresStorage](i)
-	}
-
-	//Пробуем файловое хранилище
-	if _, err = do.Invoke[*storage.FileStorage](i); err == nil {
-		s.logger.WithField("storage", "file").Info("using file storage")
-		return do.MustInvoke[*storage.FileStorage](i)
-	}
-
-	s.logger.WithField("storage", "locMem").Info("using memory storage")
-	return do.MustInvoke[*storage.LocalStorage](i)
 }
 
 func (s *Server) save(ctx context.Context, expand string, userID int) (storage.Data, error) {
