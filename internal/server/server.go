@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/pprof"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -35,6 +37,15 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
 
 	s.storage = do.MustInvoke[storage.DataKeeper](i)
+
+	//pprof
+	s.echo.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
+	s.echo.GET("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
+	s.echo.GET("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
+	s.echo.GET("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
+	s.echo.POST("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
+	s.echo.GET("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 
 	//routes
 	s.echo.POST(`/`, s.create)

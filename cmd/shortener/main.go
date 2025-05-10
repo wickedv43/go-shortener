@@ -21,6 +21,10 @@ func main() {
 	do.Provide(i, config.NewConfig)
 	do.Provide(i, logger.NewLogger)
 
+	do.Provide(i, storage.NewFileStorage)
+	do.Provide(i, storage.NewLocalStorage)
+	do.Provide(i, storage.NewPostgresStorage)
+
 	log := do.MustInvoke[*logger.Logger](i)
 	//storages
 	if err := provideStorageByPriority(i); err != nil {
