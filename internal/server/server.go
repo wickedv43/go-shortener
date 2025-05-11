@@ -1,3 +1,8 @@
+// Package server contains the main HTTP server logic for the URL shortener service.
+// It defines middleware, routing, authentication, compression, logging, CORS handling,
+// and endpoint handlers for operations such as creating, retrieving, and deleting short URLs.
+// The server uses Echo as its web framework and integrates with pprof for profiling,
+// as well as JWT-based user identification via cookies.
 package server
 
 import (
@@ -17,13 +22,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Server represents the HTTP server and its dependencies.
 type Server struct {
-	echo    *echo.Echo
-	cfg     *config.Config
-	storage storage.DataKeeper
-	logger  *logrus.Entry
+	echo    *echo.Echo         // Echo HTTP server instance.
+	cfg     *config.Config     // Configuration settings.
+	storage storage.DataKeeper // Interface to storage layer.
+	logger  *logrus.Entry      // Structured logger.
 }
 
+// NewServer creates and configures a new Server instance using dependency injection.
+// It sets up middlewares, profiling endpoints, and all routes.
 func NewServer(i do.Injector) (*Server, error) {
 	s, err := do.InvokeStruct[Server](i)
 	if err != nil {
@@ -35,10 +43,9 @@ func NewServer(i do.Injector) (*Server, error) {
 
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
-
 	s.storage = do.MustInvoke[storage.DataKeeper](i)
 
-	//pprof
+	// pprof endpoints
 	s.echo.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	s.echo.GET("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
 	s.echo.GET("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
@@ -47,28 +54,25 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.echo.GET("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 
-	//routes
-	s.echo.POST(`/`, s.create)
-	s.echo.GET(`/:short`, s.getShort)
-
-	s.echo.GET(`/ping`, s.ping)
-
-	s.echo.POST(`/api/shorten`, s.createJSON)
-	s.echo.POST(`/api/shorten/batch`, s.batch)
-
-	s.echo.GET(`/api/user/urls`, s.userURLs)
-	s.echo.DELETE(`/api/user/urls`, s.deleteUserURLs)
+	// API routes
+	s.echo.POST(`/`, s.Create)
+	s.echo.GET(`/:short`, s.GetShort)
+	s.echo.GET(`/Ping`, s.Ping)
+	s.echo.POST(`/api/shorten`, s.CreateJSON)
+	s.echo.POST(`/api/shorten/Batch`, s.Batch)
+	s.echo.GET(`/api/user/urls`, s.UserURLs)
+	s.echo.DELETE(`/api/user/urls`, s.DeleteUserURLs)
 
 	return s, nil
 }
 
+// save persists a new URL or returns ErrConflict if it already exists.
 func (s *Server) save(ctx context.Context, expand string, userID int) (storage.Data, error) {
 	if expand == "" {
 		return storage.Data{}, errors.New("empty url")
 	}
 
 	data, err := s.storage.Get(ctx, expand)
-
 	if err != nil {
 		data.OriginalURL = expand
 		data.ShortURL = ShortURL()
@@ -84,6 +88,7 @@ func (s *Server) save(ctx context.Context, expand string, userID int) (storage.D
 	return data, ErrConflict
 }
 
+// get retrieves URL data from storage by its short alias.
 func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 	ctx := c.Request().Context()
 
@@ -94,6 +99,7 @@ func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
 	return data, nil
 }
 
+// getAll retrieves all stored URLs belonging to the specified user.
 func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	ctx := c.Request().Context()
 
@@ -113,10 +119,13 @@ func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
 	return data, nil
 }
 
+// batchDelete removes a Batch of short URLs from storage.
 func (s *Server) batchDelete(shorts []string) error {
 	return s.storage.BatchDelete(shorts)
 }
 
+// Start runs the HTTP server on the configured address.
+// Logs a fatal error if the server fails to start.
 func (s *Server) Start() {
 	s.logger.Info("server started")
 	err := s.echo.Start(s.cfg.Server.FlagRunAddr)

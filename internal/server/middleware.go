@@ -8,23 +8,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// logHandler is a middleware that logs details about each HTTP request,
+// including method, URI, response status, size, and processing latency.
 func (s *Server) logHandler(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		t := time.Now()
-		// before requestJSON
 
 		err := next(c)
-
 		if err != nil {
 			return err
 		}
 
-		// after requestJSON
 		latency := time.Since(t)
-
 		reqMethod := c.Request().Method
 		reqURI := c.Request().RequestURI
-
 		respStatus := c.Response().Status
 		respSize := c.Response().Size
 
@@ -40,6 +37,8 @@ func (s *Server) logHandler(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// CORSMiddleware is a middleware that adds CORS headers to the response,
+// allowing cross-origin requests from any domain and handling preflight OPTIONS requests.
 func (s *Server) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Set("Access-Control-Allow-Origin", "*")

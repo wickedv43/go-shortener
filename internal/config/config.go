@@ -1,3 +1,5 @@
+// Package config provides the application configuration structure and
+// initialization logic using command-line flags and environment variables.
 package config
 
 import (
@@ -12,27 +14,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Config holds server configuration and internal logger instance.
 type Config struct {
-	Server Server
-	log    *logrus.Entry
+	Server Server        // Server-related configuration parameters.
+	log    *logrus.Entry // Internal logger instance scoped to the config component.
 }
 
-// Server struct
-// FlagRunAddr - address and port to run server
-// FlagSuffixAddr - address before short url
-// FlagStoragePath - path to db recovery file
+// Server contains flags and environment-based parameters required to run the server.
 type Server struct {
-	FlagRunAddr     string
-	FlagSuffixAddr  string
-	FlagStoragePath string
-	FlagDatabaseDSN string
+	FlagRunAddr     string // Address and port where the HTTP server will run.
+	FlagSuffixAddr  string // Base URL used when constructing short links.
+	FlagStoragePath string // Path to the JSON file used for storage recovery.
+	FlagDatabaseDSN string // PostgreSQL connection string.
 }
 
-// Lvl - logs level
+// Logger defines the logging level to be used in the application.
 type Logger struct {
-	Lvl logrus.Level
+	Lvl logrus.Level // Logging level (e.g., Info, Debug).
 }
 
+// NewConfig initializes and returns a Config instance.
+// It parses command-line flags, loads environment variables from a .env file,
+// and applies them to override default values.
+// Uses the samber/do dependency injection container.
 func NewConfig(i do.Injector) (*Config, error) {
 	cfg, err := do.InvokeStruct[Config](i)
 	if err != nil {
@@ -46,35 +50,29 @@ func NewConfig(i do.Injector) (*Config, error) {
 
 	cfg.log = log.WithField("component", "config")
 
-	//flags
+	// flags
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 	flag.Parse()
+
 	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
 	}
 
-	//env
-	ServerAddr := os.Getenv("SERVER_ADDRESS")
-	if ServerAddr != "" {
+	// override with env vars if present
+	if ServerAddr := os.Getenv("SERVER_ADDRESS"); ServerAddr != "" {
 		cfg.Server.FlagRunAddr = ServerAddr
 	}
-
-	BaseURL := os.Getenv("BASE_URL")
-	if BaseURL != "" {
+	if BaseURL := os.Getenv("BASE_URL"); BaseURL != "" {
 		cfg.Server.FlagSuffixAddr = BaseURL
 	}
-
-	FileStoragePath := os.Getenv("FILE_STORAGE_PATH")
-	if FileStoragePath != "" {
+	if FileStoragePath := os.Getenv("FILE_STORAGE_PATH"); FileStoragePath != "" {
 		cfg.Server.FlagStoragePath = FileStoragePath
 	}
-
-	DatabaseDSN := os.Getenv("DATABASE_DSN")
-	if DatabaseDSN != "" {
+	if DatabaseDSN := os.Getenv("DATABASE_DSN"); DatabaseDSN != "" {
 		cfg.Server.FlagDatabaseDSN = DatabaseDSN
 	}
 

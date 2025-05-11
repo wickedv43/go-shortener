@@ -29,6 +29,6 @@ func BenchmarkGetShort(b *testing.B) {
 		ctx.SetParamNames("short")
 		ctx.SetParamValues("abc123")
 
-		_ = srv.getShort(ctx)
+		_ = srv.GetShort(ctx)
 	}
 }

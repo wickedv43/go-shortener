@@ -9,23 +9,30 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// gzipResponseWriter wraps http.ResponseWriter and adds gzip compression support.
 type gzipResponseWriter struct {
 	http.ResponseWriter
 	writer *gzip.Writer
 }
 
+// Write writes compressed data to the response using gzip.
 func (w *gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.writer.Write(b)
 }
 
+// Header returns the header map that will be sent by WriteHeader.
 func (w *gzipResponseWriter) Header() http.Header {
 	return w.ResponseWriter.Header()
 }
 
+// WriteHeader sends an HTTP response header with the provided status code.
 func (w *gzipResponseWriter) WriteHeader(statusCode int) {
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
+// gzipMiddleware is an Echo middleware that handles gzip compression and decompression.
+// It compresses the response if the client supports gzip, and decompresses the request body
+// if it's received in gzip format.
 func (s *Server) gzipMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		acceptEncoding := c.Request().Header.Get("Accept-Encoding")

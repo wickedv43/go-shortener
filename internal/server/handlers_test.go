@@ -59,7 +59,7 @@ func TestServer_create_success(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.create(ctx)
+	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, rec.Code)
 	require.Equal(t, "text/plain", rec.Header().Get("Content-Type"))
@@ -75,7 +75,7 @@ func TestServer_create_invalidContentType(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.create(ctx)
+	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 	require.Contains(t, rec.Body.String(), "Bad request")
@@ -90,7 +90,7 @@ func TestServer_create_unauthorized(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", "not-int")
 
-	err := srv.create(ctx)
+	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
 	require.Contains(t, rec.Body.String(), "userID is not of type int")
@@ -115,7 +115,7 @@ func TestServer_create_conflict(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.create(ctx)
+	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusConflict, rec.Code)
 	require.Contains(t, rec.Body.String(), "abc123")
@@ -138,7 +138,7 @@ func TestServer_create_saveError(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.create(ctx)
+	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
 }
@@ -162,7 +162,7 @@ func TestServer_createJSON(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.createJSON(ctx)
+	err := srv.CreateJSON(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, rec.Code)
 	require.Contains(t, rec.Body.String(), "/") // проверяем, что есть ShortURL
@@ -189,7 +189,7 @@ func TestServer_createJSON_conflict(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 123)
 
-	err := srv.createJSON(ctx)
+	err := srv.CreateJSON(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusConflict, rec.Code)
 	require.Contains(t, rec.Body.String(), "abc123") // должен вернуть существующий short
@@ -212,7 +212,7 @@ func TestServer_getShort_ok(t *testing.T) {
 	ctx.SetParamNames("short")
 	ctx.SetParamValues("abc123")
 
-	err := srv.getShort(ctx)
+	err := srv.GetShort(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusTemporaryRedirect, rec.Code)
 	require.Equal(t, "https://example.com", rec.Header().Get("Location"))
@@ -235,7 +235,7 @@ func TestServer_getShort_gone(t *testing.T) {
 	ctx.SetParamNames("short")
 	ctx.SetParamValues("abc123")
 
-	err := srv.getShort(ctx)
+	err := srv.GetShort(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusGone, rec.Code)
 	require.Contains(t, rec.Body.String(), "Gone")
@@ -254,7 +254,7 @@ func TestServer_getShort_internalError(t *testing.T) {
 	ctx.SetParamNames("short")
 	ctx.SetParamValues("abc123")
 
-	err := srv.getShort(ctx)
+	err := srv.GetShort(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
 	require.Contains(t, rec.Body.String(), "Server error")
@@ -282,14 +282,14 @@ func TestServer_batch_success(t *testing.T) {
 	reqBody := `[{"correlation_id": "1", "original_url": "https://a.com"},
 	             {"correlation_id": "2", "original_url": "https://b.com"}]`
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(reqBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.batch(ctx)
+	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, rec.Code)
 	require.Contains(t, rec.Body.String(), `"correlation_id":"1"`)
@@ -299,14 +299,14 @@ func TestServer_batch_success(t *testing.T) {
 func TestServer_batch_unauthorized(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(`[]`))
+	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`[]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", "string-instead-of-int")
 
-	err := srv.batch(ctx)
+	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
 }
@@ -314,14 +314,14 @@ func TestServer_batch_unauthorized(t *testing.T) {
 func TestServer_batch_invalidJSON(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(`{invalid-json}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`{invalid-json}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.batch(ctx)
+	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 	require.Contains(t, rec.Body.String(), "error")
@@ -330,14 +330,14 @@ func TestServer_batch_invalidJSON(t *testing.T) {
 func TestServer_batch_empty(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(`[]`))
+	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`[]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.batch(ctx)
+	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 	require.Contains(t, rec.Body.String(), "empty")
@@ -354,7 +354,7 @@ func TestServer_batch_saveError(t *testing.T) {
 			Return(errors.New("save error"))
 	})
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(
+	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(
 		`[{"correlation_id": "1", "original_url": "https://a.com"}]`,
 	))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -363,7 +363,7 @@ func TestServer_batch_saveError(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.batch(ctx)
+	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
 	require.Contains(t, rec.Body.String(), "save error")
@@ -387,7 +387,7 @@ func TestServer_userURLs_success(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", userID)
 
-	err := srv.userURLs(ctx)
+	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), "abc1")
@@ -403,7 +403,7 @@ func TestServer_userURLs_unauthorized(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", "not-int")
 
-	err := srv.userURLs(ctx)
+	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
 	require.Contains(t, rec.Body.String(), "userID is not of type int")
@@ -421,7 +421,7 @@ func TestServer_userURLs_noContent(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.userURLs(ctx)
+	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNoContent, rec.Code)
 }
@@ -438,7 +438,7 @@ func TestServer_userURLs_internalError(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.userURLs(ctx)
+	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
 	require.Contains(t, rec.Body.String(), "getting data")
@@ -453,7 +453,7 @@ func TestServer_deleteUserURLs_bindError(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.deleteUserURLs(ctx)
+	err := srv.DeleteUserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
 }
@@ -467,7 +467,7 @@ func TestServer_deleteUserURLs_emptyList(t *testing.T) {
 	ctx := srv.echo.NewContext(req, rec)
 	ctx.Set("userID", 42)
 
-	err := srv.deleteUserURLs(ctx)
+	err := srv.DeleteUserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusAccepted, rec.Code)
 }

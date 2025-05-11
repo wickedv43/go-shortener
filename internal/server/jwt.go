@@ -11,16 +11,18 @@ import (
 )
 
 var (
-	//TODO: move to cfg!
+	// TODO: move to config
 	secretKey  = []byte("supersecretkey")
 	cookieName = "auth_token"
 )
 
+// Claims represents the JWT payload used for authentication.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int `json:"user_id"`
 }
 
+// createJWT generates a new JWT token with a generated user ID and 24-hour expiration.
 func (s *Server) createJWT() (string, error) {
 	userID := uuid.New().ClockSequence()
 
@@ -28,7 +30,6 @@ func (s *Server) createJWT() (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
-		//generate userID
 		UserID: userID,
 	}
 
@@ -37,8 +38,8 @@ func (s *Server) createJWT() (string, error) {
 	return token.SignedString(secretKey)
 }
 
+// getUserIDFromCookie parses the JWT token from the provided cookie and returns the user ID.
 func (s *Server) getUserIDFromCookie(cookie *http.Cookie) (int, error) {
-
 	token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
@@ -52,11 +53,12 @@ func (s *Server) getUserIDFromCookie(cookie *http.Cookie) (int, error) {
 	return 0, errors.Wrapf(err, "get userID from cookie %s", cookieName)
 }
 
+// authMiddleware is an Echo middleware that checks for a valid JWT cookie.
+// If the cookie does not exist, it creates one and assigns a new user ID.
+// The user ID is stored in the context for downstream handlers.
 func (s *Server) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var (
-			jwtToken string
-		)
+		var jwtToken string
 
 		cookie, err := c.Cookie(cookieName)
 		if err != nil {
@@ -75,7 +77,8 @@ func (s *Server) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 			c.SetCookie(cookie)
 
-			userID, err := s.getUserIDFromCookie(cookie)
+			var userID int
+			userID, err = s.getUserIDFromCookie(cookie)
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, "Getting user from cookie")
 			}

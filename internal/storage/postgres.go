@@ -12,12 +12,15 @@ import (
 	"github.com/wickedv43/go-shortener/internal/logger"
 )
 
+// PostgresStorage implements the DataKeeper interface using a PostgreSQL database.
 type PostgresStorage struct {
-	pgDB *sql.DB
-	log  *logrus.Entry
-	cfg  *config.Config
+	pgDB *sql.DB        // PostgreSQL connection pool.
+	log  *logrus.Entry  // Logger instance for DB-related messages.
+	cfg  *config.Config // Configuration with PostgreSQL DSN.
 }
 
+// NewPostgresStorage initializes a new PostgresStorage instance using dependency injection.
+// It connects to the PostgreSQL database and ensures that the "urls" table exists.
 func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 	storage, err := do.InvokeStruct[PostgresStorage](i)
 	log := do.MustInvoke[*logger.Logger](i).WithField("component", "db")
@@ -52,6 +55,7 @@ func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 	return storage, err
 }
 
+// Save inserts a new shortened URL entry into the database.
 func (s *PostgresStorage) Save(ctx context.Context, d Data) error {
 	query := `INSERT INTO urls (uuid, short_url, original_url) 
           VALUES ($1, $2, $3)`
@@ -64,6 +68,7 @@ func (s *PostgresStorage) Save(ctx context.Context, d Data) error {
 	return nil
 }
 
+// Get retrieves a URL record by either its short or original form.
 func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 	var data Data
 
@@ -77,6 +82,7 @@ func (s *PostgresStorage) Get(ctx context.Context, url string) (Data, error) {
 	return data, nil
 }
 
+// GetAll returns all URL entries associated with the given user ID.
 func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error) {
 	var data []Data
 	var err error
@@ -104,10 +110,12 @@ func (s *PostgresStorage) GetAll(ctx context.Context, userID int) ([]Data, error
 	return data, nil
 }
 
+// HealthCheck checks the connection to the PostgreSQL database.
 func (s *PostgresStorage) HealthCheck() error {
 	return s.pgDB.Ping()
 }
 
+// BatchDelete sets the is_deleted flag to true for a batch of short URLs.
 func (s *PostgresStorage) BatchDelete(short []string) error {
 	query := `UPDATE urls 
           SET is_deleted = true 
@@ -136,6 +144,7 @@ func (s *PostgresStorage) BatchDelete(short []string) error {
 	return nil
 }
 
+// Close terminates the connection to the PostgreSQL database.
 func (s *PostgresStorage) Close() error {
 	return s.pgDB.Close()
 }

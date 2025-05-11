@@ -14,12 +14,16 @@ import (
 	"github.com/wickedv43/go-shortener/internal/logger"
 )
 
+// FileStorage implements the DataKeeper interface using a plain text file.
+// Each line in the file represents a JSON-encoded Data object.
 type FileStorage struct {
-	file *os.File
-	log  *logrus.Entry
-	cfg  *config.Config
+	file *os.File       // Open file handle used for read/write operations.
+	log  *logrus.Entry  // Logger instance scoped to file storage.
+	cfg  *config.Config // Application configuration (contains file path).
 }
 
+// NewFileStorage initializes a FileStorage instance using dependency injection,
+// ensures the file directory exists, and creates the file if it doesn't exist.
 func NewFileStorage(i do.Injector) (*FileStorage, error) {
 	storage, err := do.InvokeStruct[FileStorage](i)
 	if err != nil {
@@ -29,21 +33,21 @@ func NewFileStorage(i do.Injector) (*FileStorage, error) {
 	storage.log = do.MustInvoke[*logger.Logger](i).WithField("component", "db")
 	storage.cfg = do.MustInvoke[*config.Config](i)
 
-	//create dir for file
+	// Ensure the directory for the file exists.
 	filePath, _ := filepath.Split(storage.cfg.Server.FlagStoragePath)
 	_ = os.MkdirAll(filePath, 0755)
 
-	// create  file
+	// Open or create the file.
 	storage.file, err = storage.Open()
 	if err != nil {
 		return nil, errors.Wrap(err, "create file")
 	}
-
 	defer storage.file.Close()
 
 	return storage, err
 }
 
+// Get reads the file line by line and returns a matching Data entry by short or original URL.
 func (s *FileStorage) Get(_ context.Context, url string) (Data, error) {
 	file, err := s.Open()
 	if err != nil {
@@ -79,6 +83,7 @@ func (s *FileStorage) Get(_ context.Context, url string) (Data, error) {
 	return Data{}, errors.New("URL not found")
 }
 
+// GetAll returns all Data records associated with a specific user ID.
 func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	file, err := s.Open()
 	if err != nil {
@@ -87,7 +92,6 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-
 	data := make([]Data, 0)
 
 	for scanner.Scan() {
@@ -120,25 +124,27 @@ func (s *FileStorage) GetAll(_ context.Context, userID int) ([]Data, error) {
 	return data, nil
 }
 
+// BatchDelete is not implemented for file storage (stub method).
 func (s *FileStorage) BatchDelete(_ []string) error {
 	return nil
 }
 
+// HealthCheck verifies access to the storage file by attempting to open it.
 func (s *FileStorage) HealthCheck() error {
 	_, err := s.Open()
 	if err != nil {
 		return errors.Wrap(err, "open file")
 	}
 	defer s.file.Close()
-
 	return nil
 }
 
+// Close closes the currently open file handle.
 func (s *FileStorage) Close() error {
-	//TODO implement me
 	return s.file.Close()
 }
 
+// Save appends a new Data record to the file as a single JSON line.
 func (s *FileStorage) Save(_ context.Context, d Data) error {
 	var err error
 
@@ -146,14 +152,13 @@ func (s *FileStorage) Save(_ context.Context, d Data) error {
 	if err != nil {
 		return errors.Wrap(err, "open file")
 	}
-
 	defer s.file.Close()
 
 	data, err := json.Marshal(d)
-	data = append(data, '\n')
 	if err != nil {
 		return errors.Wrap(err, "marshal data")
 	}
+	data = append(data, '\n')
 
 	_, err = s.file.Write(data)
 	if err != nil {
@@ -163,12 +168,12 @@ func (s *FileStorage) Save(_ context.Context, d Data) error {
 	return nil
 }
 
-// Open or Create file
+// Open opens the configured file in append/read-write mode, creating it if it doesn't exist.
 func (s *FileStorage) Open() (*os.File, error) {
 	return os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 }
 
-// RemoveFile remove file
+// RemoveFile deletes the storage file from the filesystem.
 func (s *FileStorage) RemoveFile() error {
 	return os.Remove(s.cfg.Server.FlagStoragePath)
 }
