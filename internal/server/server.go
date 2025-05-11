@@ -57,9 +57,9 @@ func NewServer(i do.Injector) (*Server, error) {
 	// API routes
 	s.echo.POST(`/`, s.Create)
 	s.echo.GET(`/:short`, s.GetShort)
-	s.echo.GET(`/Ping`, s.Ping)
+	s.echo.GET(`/ping`, s.Ping)
 	s.echo.POST(`/api/shorten`, s.CreateJSON)
-	s.echo.POST(`/api/shorten/Batch`, s.Batch)
+	s.echo.POST(`/api/shorten/batch`, s.Batch)
 	s.echo.GET(`/api/user/urls`, s.UserURLs)
 	s.echo.DELETE(`/api/user/urls`, s.DeleteUserURLs)
 
