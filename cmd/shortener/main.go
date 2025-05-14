@@ -58,5 +58,4 @@ func provideStorageByPriority(i do.Injector) {
 	do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
 		return s, nil
 	})
-	return
 }
