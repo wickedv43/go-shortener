@@ -51,8 +51,8 @@ func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 }
 
 // Migrate runs pending database schema migrations using files from internal/storage/migrations.
-func (p *PostgresStorage) Migrate() error {
-	m, err := migrate.New("file://internal/storage/migrations", p.cfg.Server.FlagDatabaseDSN)
+func (s *PostgresStorage) Migrate() error {
+	m, err := migrate.New("file://internal/storage/migrations", s.cfg.Server.FlagDatabaseDSN)
 	if err != nil {
 		return errors.Wrap(err, "create migrate instance")
 	}
@@ -60,7 +60,7 @@ func (p *PostgresStorage) Migrate() error {
 	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
 		return errors.Wrap(err, "apply migrations")
 	}
-	p.log.Info("migrated successfully")
+	s.log.Info("migrated successfully")
 
 	return nil
 }
