@@ -15,9 +15,13 @@
 cmd/shortener/main
 cmd/shortener/shortener
 
+# ENV
+.env
+
 # Dependency directories (remove the comment below to include it)
 vendor/
 
 # IDEs directories
 .idea
 .vscode
+/cmd/client/
