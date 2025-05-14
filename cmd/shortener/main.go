@@ -12,8 +12,6 @@ import (
 )
 
 func main() {
-
-	// provide part
 	i := do.New()
 
 	do.Provide(i, server.NewServer)
@@ -23,7 +21,7 @@ func main() {
 	do.Provide(i, storage.NewFileStorage)
 	do.Provide(i, storage.NewLocalStorage)
 	do.Provide(i, storage.NewPostgresStorage)
-	//storages
+
 	provideStorageByPriority(i)
 
 	do.MustInvoke[*server.Server](i).Start()

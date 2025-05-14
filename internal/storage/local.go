@@ -12,8 +12,8 @@ import (
 // LocalStorage is an in-memory implementation of the DataKeeper interface.
 // It is mainly used for development or testing without a persistent backend.
 type LocalStorage struct {
-	LocMem []Data        // In-memory slice storing Data objects.
 	log    *logrus.Entry // Logger instance scoped to local storage.
+	LocMem []Data        // In-memory slice storing Data objects.
 }
 
 // NewLocalStorage creates and initializes a LocalStorage instance using dependency injection.

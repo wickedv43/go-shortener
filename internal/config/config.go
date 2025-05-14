@@ -16,8 +16,8 @@ import (
 
 // Config holds server configuration and internal logger instance.
 type Config struct {
-	Server Server        // Server-related configuration parameters.
 	log    *logrus.Entry // Internal logger instance scoped to the config component.
+	Server Server        // Server-related configuration parameters.
 }
 
 // Server contains flags and environment-based parameters required to run the server.

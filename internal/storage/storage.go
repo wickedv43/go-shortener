@@ -11,9 +11,9 @@ import (
 // Data represents a record of a shortened URL, including the user ID,
 // original URL, short alias, and deletion flag.
 type Data struct {
-	UUID        int    `json:"uuid"`         // ID of the user who created the short URL.
 	ShortURL    string `json:"short_url"`    // The generated short URL alias.
 	OriginalURL string `json:"original_url"` // The original long URL.
+	UUID        int    `json:"uuid"`         // ID of the user who created the short URL.
 	DeletedFlag bool   `json:"is_deleted"`   // Flag indicating whether the URL has been deleted.
 }
 

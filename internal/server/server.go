@@ -125,11 +125,10 @@ func (s *Server) batchDelete(shorts []string) error {
 }
 
 // Start runs the HTTP server on the configured address.
-// Logs a fatal error if the server fails to start.
 func (s *Server) Start() {
 	s.logger.Info("server started")
 	err := s.echo.Start(s.cfg.Server.FlagRunAddr)
 	if err != nil {
-		s.logger.Fatal(errors.Wrap(err, "start server"))
+		s.logger.Error(err, "start server")
 	}
 }
