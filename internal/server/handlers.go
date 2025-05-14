@@ -72,11 +72,11 @@ func (s *Server) GetShort(c echo.Context) error {
 	short := c.Param("short")
 
 	data, err := s.get(c, short)
+	s.logger.Info("get data:", data, err)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	s.logger.Info(data)
 	if data.DeletedFlag {
 		return c.JSON(http.StatusGone, "Gone")
 	}
@@ -142,10 +142,11 @@ func (s *Server) Batch(c echo.Context) error {
 
 	var (
 		reqs []batchRequest
-		resp []batchResponse
 		err  error
 		data storage.Data
 	)
+
+	resp := make([]batchResponse, 0, len(reqs))
 
 	val := c.Get("userID")
 	userID, ok := val.(int)

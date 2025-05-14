@@ -4,12 +4,16 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
+
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 // PostgresStorage implements the DataKeeper interface using a PostgreSQL database.
@@ -20,7 +24,6 @@ type PostgresStorage struct {
 }
 
 // NewPostgresStorage initializes a new PostgresStorage instance using dependency injection.
-// It connects to the PostgreSQL database and ensures that the "urls" table exists.
 func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 	storage, err := do.InvokeStruct[PostgresStorage](i)
 	log := do.MustInvoke[*logger.Logger](i).WithField("component", "db")
@@ -39,20 +42,27 @@ func NewPostgresStorage(i do.Injector) (*PostgresStorage, error) {
 	}
 	storage.pgDB = pgDB
 
-	query := `
-    CREATE TABLE IF NOT EXISTS urls (
-        uuid SERIAL NOT NULL,
-        short_url TEXT NOT NULL,
-        original_url TEXT NOT NULL, 
-        is_deleted BOOLEAN NOT NULL DEFAULT FALSE
-    );`
-
-	_, err = storage.pgDB.Exec(query)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create urls table")
+	if err = storage.Migrate(); err != nil {
+		log.Error("migration failed: ", err)
+		return nil, err
 	}
 
 	return storage, err
+}
+
+// Migrate runs pending database schema migrations using files from internal/storage/migrations.
+func (p *PostgresStorage) Migrate() error {
+	m, err := migrate.New("file://internal/storage/migrations", p.cfg.Server.FlagDatabaseDSN)
+	if err != nil {
+		return errors.Wrap(err, "create migrate instance")
+	}
+
+	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
+		return errors.Wrap(err, "apply migrations")
+	}
+	p.log.Info("migrated successfully")
+
+	return nil
 }
 
 // Save inserts a new shortened URL entry into the database.

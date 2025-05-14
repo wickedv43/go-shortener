@@ -23,19 +23,15 @@ func main() {
 	do.Provide(i, storage.NewFileStorage)
 	do.Provide(i, storage.NewLocalStorage)
 	do.Provide(i, storage.NewPostgresStorage)
-
-	log := do.MustInvoke[*logger.Logger](i)
 	//storages
-	if err := provideStorageByPriority(i); err != nil {
-		log.Error("failed to choose storage:", err)
-	}
+	provideStorageByPriority(i)
 
 	do.MustInvoke[*server.Server](i).Start()
 
 	i.ShutdownOnSignals(syscall.SIGTERM, os.Interrupt)
 }
 
-func provideStorageByPriority(i do.Injector) error {
+func provideStorageByPriority(i do.Injector) {
 	log := do.MustInvoke[*logger.Logger](i).WithField("component", "storage")
 
 	// Пробуем Postgres
@@ -44,7 +40,7 @@ func provideStorageByPriority(i do.Injector) error {
 		do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
 			return s, nil
 		})
-		return nil
+		return
 	}
 
 	// Пробуем файл
@@ -53,7 +49,7 @@ func provideStorageByPriority(i do.Injector) error {
 		do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
 			return s, nil
 		})
-		return nil
+		return
 	}
 
 	// Fallback: память
@@ -62,5 +58,5 @@ func provideStorageByPriority(i do.Injector) error {
 	do.Provide(i, func(i do.Injector) (storage.DataKeeper, error) {
 		return s, nil
 	})
-	return nil
+	return
 }
