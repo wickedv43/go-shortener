@@ -1,3 +1,4 @@
+//go:generate go run generator/build.go
 package main
 
 import (
@@ -11,6 +12,12 @@ import (
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
 	i := do.New()
 
@@ -21,6 +28,11 @@ func main() {
 	do.Provide(i, storage.NewFileStorage)
 	do.Provide(i, storage.NewLocalStorage)
 	do.Provide(i, storage.NewPostgresStorage)
+
+	log := do.MustInvoke[*logger.Logger](i)
+	log.Info("BuildVersion: ", buildVersion)
+	log.Info("BuildDate: ", buildDate)
+	log.Info("BuildCommit: ", buildCommit)
 
 	provideStorageByPriority(i)
 
