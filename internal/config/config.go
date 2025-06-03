@@ -4,6 +4,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -26,6 +27,11 @@ type Server struct {
 	FlagSuffixAddr  string // Base URL used when constructing short links.
 	FlagStoragePath string // Path to the JSON file used for storage recovery.
 	FlagDatabaseDSN string // PostgreSQL connection string.
+
+	FlagCertPath string // Path to certs
+	FlagKeyPath  string // Path to key
+	FlagHTTPS    bool   // Enable HTTPS flag
+
 }
 
 // Logger defines the logging level to be used in the application.
@@ -52,11 +58,13 @@ func NewConfig(i do.Injector) (*Config, error) {
 
 	// flags
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
-	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
+	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", ":8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
+	flag.StringVar(&cfg.Server.FlagCertPath, "c", "./cert/server.crt", "path to TLS certificate file")
+	flag.StringVar(&cfg.Server.FlagKeyPath, "k", "./cert/server.key", "path to TLS certificate file")
+	flag.BoolVar(&cfg.Server.FlagHTTPS, "s", true, "use HTTPS")
 	flag.Parse()
-
 	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
@@ -75,6 +83,10 @@ func NewConfig(i do.Injector) (*Config, error) {
 	if DatabaseDSN := os.Getenv("DATABASE_DSN"); DatabaseDSN != "" {
 		cfg.Server.FlagDatabaseDSN = DatabaseDSN
 	}
+	if envHTTPS := os.Getenv("ENABLE_HTTPS"); envHTTPS != "" {
+		cfg.Server.FlagHTTPS = envHTTPS == "true"
+	}
 
+	fmt.Println(&cfg.Server)
 	return cfg, nil
 }

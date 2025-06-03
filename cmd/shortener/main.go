@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"syscall"
 
@@ -19,6 +20,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	i := do.New()
 
 	do.Provide(i, server.NewServer)

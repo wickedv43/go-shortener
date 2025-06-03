@@ -124,11 +124,19 @@ func (s *Server) batchDelete(shorts []string) error {
 	return s.storage.BatchDelete(shorts)
 }
 
-// Start runs the HTTP server on the configured address.
+// Start runs the HTTP or HTTPS server on the configured address.
 func (s *Server) Start() {
-	s.logger.Info("server started")
+	s.logger.Info("starting server...")
+
+	if s.cfg.Server.FlagHTTPS {
+		err := s.echo.StartTLS(s.cfg.Server.FlagRunAddr, s.cfg.Server.FlagCertPath, s.cfg.Server.FlagKeyPath)
+		if err != nil {
+			s.logger.Error(err, "start https server")
+		}
+	}
+
 	err := s.echo.Start(s.cfg.Server.FlagRunAddr)
 	if err != nil {
-		s.logger.Error(err, "start server")
+		s.logger.Error(err, "start http server")
 	}
 }

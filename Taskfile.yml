@@ -3,9 +3,13 @@ version: '3'
 tasks:
   generate:
     go generate ./cmd/shortener
-
-  server:
+  cert:
+    mkcert -key-file cert/server.key -cert-file cert/server.crt localhost 127.0.0.1 ::1
+  http:
     go run ./cmd/shortener/.
+  https:
+    cmds:
+    - go run ./cmd/shortener/.
   mock:
     mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
 
