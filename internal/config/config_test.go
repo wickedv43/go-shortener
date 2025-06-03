@@ -16,8 +16,6 @@ func resetConfig() {
 	_ = os.Unsetenv("SERVER_ADDRESS")
 	_ = os.Unsetenv("BASE_URL")
 	_ = os.Unsetenv("FILE_STORAGE_PATH")
-	_ = os.Unsetenv("DATABASE_DSN")
-	_ = os.Unsetenv("ENABLE_HTTPS")
 }
 
 func TestNewConfig_DefaultFlagsAndEnv(t *testing.T) {
