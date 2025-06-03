@@ -17,6 +17,7 @@ func resetConfig() {
 	_ = os.Unsetenv("BASE_URL")
 	_ = os.Unsetenv("FILE_STORAGE_PATH")
 	_ = os.Unsetenv("DATABASE_DSN")
+	_ = os.Unsetenv("ENABLE_HTTPS")
 }
 
 func TestNewConfig_DefaultFlagsAndEnv(t *testing.T) {
@@ -57,8 +58,9 @@ func TestNewConfig_CustomFlags(t *testing.T) {
 	do.Provide(container, func(i do.Injector) (*Config, error) {
 		return &Config{}, nil
 	})
-
 	cfg, err := NewConfig(container)
+	flag.Parse()
+
 	require.NoError(t, err)
 	require.Equal(t, ":9990", cfg.Server.FlagRunAddr)
 	require.Equal(t, "https://short.test", cfg.Server.FlagSuffixAddr)
