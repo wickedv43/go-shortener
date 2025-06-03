@@ -4,6 +4,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -98,6 +99,8 @@ func NewConfig(i do.Injector) (*Config, error) {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
+
+	fmt.Println(cfg)
 
 	return cfg, nil
 }
