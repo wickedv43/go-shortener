@@ -9,7 +9,7 @@ tasks:
     go run ./cmd/shortener/.
   https:
     cmds:
-    - go run ./cmd/shortener/.
+    - go run ./cmd/shortener/. -s
   mock:
     mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
 

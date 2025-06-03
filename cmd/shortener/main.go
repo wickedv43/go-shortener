@@ -20,7 +20,6 @@ var (
 )
 
 func main() {
-	flag.Parse()
 	i := do.New()
 
 	do.Provide(i, server.NewServer)
@@ -37,6 +36,8 @@ func main() {
 	log.Info("BuildCommit: ", buildCommit)
 
 	provideStorageByPriority(i)
+
+	flag.Parse()
 
 	do.MustInvoke[*server.Server](i).Start()
 

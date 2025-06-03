@@ -63,8 +63,8 @@ func NewConfig(i do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 	flag.StringVar(&cfg.Server.FlagCertPath, "c", "./cert/server.crt", "path to TLS certificate file")
 	flag.StringVar(&cfg.Server.FlagKeyPath, "k", "./cert/server.key", "path to TLS certificate file")
-	flag.BoolVar(&cfg.Server.FlagHTTPS, "s", true, "use HTTPS")
-	flag.Parse()
+	flag.BoolVar(&cfg.Server.FlagHTTPS, "s", false, "use HTTPS")
+
 	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
