@@ -4,8 +4,8 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
@@ -58,7 +58,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 
 	// flags
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
-	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", ":8080", "address before short url")
+	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "ht:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
 	flag.StringVar(&cfg.Server.FlagCertPath, "c", "./cert/server.crt", "path to TLS certificate file")
@@ -87,6 +87,13 @@ func NewConfig(i do.Injector) (*Config, error) {
 		cfg.Server.FlagHTTPS = envHTTPS == "true"
 	}
 
-	fmt.Println(&cfg.Server)
+	if cfg.Server.FlagSuffixAddr != "" {
+		if cfg.Server.FlagHTTPS {
+			if strings.HasPrefix(cfg.Server.FlagSuffixAddr, "http://") {
+				cfg.Server.FlagSuffixAddr = "https://" + strings.TrimPrefix(cfg.Server.FlagSuffixAddr, "http://")
+			}
+		}
+	}
+
 	return cfg, nil
 }
