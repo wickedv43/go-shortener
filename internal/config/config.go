@@ -95,5 +95,9 @@ func NewConfig(i do.Injector) (*Config, error) {
 		}
 	}
 
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
 	return cfg, nil
 }
