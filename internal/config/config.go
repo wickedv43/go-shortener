@@ -3,8 +3,8 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 
@@ -24,15 +24,16 @@ type Config struct {
 
 // Server contains flags and environment-based parameters required to run the server.
 type Server struct {
-	FlagRunAddr     string // Address and port where the HTTP server will run.
-	FlagSuffixAddr  string // Base URL used when constructing short links.
-	FlagStoragePath string // Path to the JSON file used for storage recovery.
-	FlagDatabaseDSN string // PostgreSQL connection string.
+	FlagRunAddr     string `json:"server_address"`    // Address and port where the HTTP server will run.
+	FlagSuffixAddr  string `json:"base_url"`          // Base URL used when constructing short links.
+	FlagStoragePath string `json:"file_storage_path"` // Path to the JSON file used for storage recovery.
+	FlagDatabaseDSN string `json:"database_dsn"`      // Postgres connection string.
 
-	FlagCertPath string // Path to certs
-	FlagKeyPath  string // Path to key
-	FlagHTTPS    bool   // Enable HTTPS flag
+	FlagCertPath string `json:"server_crt_path"` // Path to certs
+	FlagKeyPath  string `json:"server_ket_path"` // Path to key (NB: используем "ket" как в JSON)
+	FlagHTTPS    bool   `json:"enable_https"`    // Enable HTTPS flag
 
+	FlagConfigPath string `json:"-"` // Path to JSON config file (не парсится из JSON)
 }
 
 // Logger defines the logging level to be used in the application.
@@ -58,20 +59,28 @@ func NewConfig(i do.Injector) (*Config, error) {
 	cfg.log = log.WithField("component", "config")
 
 	// flags
+	flag.StringVar(&cfg.Server.FlagConfigPath, "c", "", "path to JSON config file")
+	flag.StringVar(&cfg.Server.FlagConfigPath, "config", "", "path to JSON config file")
 	flag.StringVar(&cfg.Server.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&cfg.Server.FlagSuffixAddr, "b", "http://localhost:8080", "address before short url")
 	flag.StringVar(&cfg.Server.FlagStoragePath, "f", "./db/storage.json", "path to database file")
 	flag.StringVar(&cfg.Server.FlagDatabaseDSN, "d", "", "database connection string")
-	flag.StringVar(&cfg.Server.FlagCertPath, "c", "./cert/server.crt", "path to TLS certificate file")
-	flag.StringVar(&cfg.Server.FlagKeyPath, "k", "./cert/server.key", "path to TLS certificate file")
+	flag.StringVar(&cfg.Server.FlagCertPath, "sc", "./cert/server.crt", "path to TLS certificate file")
+	flag.StringVar(&cfg.Server.FlagKeyPath, "sk", "./cert/server.key", "path to TLS certificate file")
 	flag.BoolVar(&cfg.Server.FlagHTTPS, "s", false, "use HTTPS")
 
+	// override with env vars if present
 	err = godotenv.Load()
 	if err != nil {
 		cfg.log.Warn(err, "loading .env file")
 	}
 
-	// override with env vars if present
+	if cfg.Server.FlagConfigPath == "" {
+		cfg.Server.FlagConfigPath = os.Getenv("CONFIG")
+	}
+
+	cfg.LoadFromJSON()
+
 	if ServerAddr := os.Getenv("SERVER_ADDRESS"); ServerAddr != "" {
 		cfg.Server.FlagRunAddr = ServerAddr
 	}
@@ -100,7 +109,21 @@ func NewConfig(i do.Injector) (*Config, error) {
 		flag.Parse()
 	}
 
-	fmt.Println(cfg)
-
 	return cfg, nil
+}
+
+func (c *Config) LoadFromJSON() {
+	if c.Server.FlagConfigPath == "" {
+		return
+	}
+
+	config, err := os.ReadFile(c.Server.FlagConfigPath)
+	if err != nil {
+		c.log.Warnf("error opening config file: %v", err)
+	}
+
+	err = json.Unmarshal(config, &c.Server)
+	if err != nil {
+		c.log.Warnf("error parsing config file: %v", err)
+	}
 }

@@ -10,6 +10,9 @@ tasks:
   https:
     cmds:
     - go run ./cmd/shortener/. -s
+  config:
+    cmds:
+      - go run ./cmd/shortener/. -c="./configs/config.json"
   mock:
     mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
 
