@@ -79,7 +79,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 		cfg.Server.FlagConfigPath = os.Getenv("CONFIG")
 	}
 
-	cfg.LoadFromJSON()
+	cfg.loadFromJSON()
 
 	if ServerAddr := os.Getenv("SERVER_ADDRESS"); ServerAddr != "" {
 		cfg.Server.FlagRunAddr = ServerAddr
@@ -112,7 +112,8 @@ func NewConfig(i do.Injector) (*Config, error) {
 	return cfg, nil
 }
 
-func (c *Config) LoadFromJSON() {
+// Parsing json cfg
+func (c *Config) loadFromJSON() {
 	if c.Server.FlagConfigPath == "" {
 		return
 	}
