@@ -1,7 +1,20 @@
 version: '3'
 
 tasks:
-  server:
+  generate:
+    go generate ./cmd/shortener
+  cert:
+    mkcert -key-file cert/server.key -cert-file cert/server.crt localhost 127.0.0.1 ::1
+  http:
     go run ./cmd/shortener/.
-  post:
-    go run ./cmd/client/.
+  https:
+    cmds:
+    - go run ./cmd/shortener/. -s
+  config:
+    cmds:
+      - go run ./cmd/shortener/. -c="./configs/config.json"
+  mock:
+    mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
+
+  docker:
+    docker run --name my-postgres -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
