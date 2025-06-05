@@ -81,3 +81,8 @@ func (l *LocalStorage) Close() error {
 	// Not applicable for in-memory storage.
 	return nil
 }
+
+func (l *LocalStorage) Shutdown(_ context.Context) error {
+	l.log.Info("Shutting down local storage (no-op)")
+	return nil
+}

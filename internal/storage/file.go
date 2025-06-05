@@ -177,3 +177,15 @@ func (s *FileStorage) Open() (*os.File, error) {
 func (s *FileStorage) RemoveFile() error {
 	return os.Remove(s.cfg.Server.FlagStoragePath)
 }
+
+func (s *FileStorage) Shutdown() error {
+	if s.file != nil {
+		err := s.file.Close()
+		if err != nil && !errors.Is(err, os.ErrClosed) {
+			return errors.Wrap(err, "failed to close file")
+		}
+		s.file = nil
+		s.log.Info("file storage closed")
+	}
+	return nil
+}

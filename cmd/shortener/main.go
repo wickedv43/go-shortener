@@ -2,8 +2,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
+	"os/signal"
 	"syscall"
 
 	"github.com/samber/do/v2"
@@ -20,6 +22,8 @@ var (
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	i := do.New()
 
 	do.Provide(i, server.NewServer)
@@ -41,7 +45,20 @@ func main() {
 
 	do.MustInvoke[*server.Server](i).Start()
 
-	i.ShutdownOnSignals(syscall.SIGTERM, os.Interrupt)
+	signalCh := make(chan os.Signal, 1)
+	signals := []os.Signal{syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT, os.Interrupt}
+
+	signal.Notify(signalCh, signals...)
+	<-signalCh
+
+	cancel()
+
+	_, err := i.ShutdownOnSignalsWithContext(ctx, signals...)
+	if err != nil {
+		log.Error("shutdown", err)
+	}
+
+	log.Info("grace shutdown")
 }
 
 func provideStorageByPriority(i do.Injector) {
