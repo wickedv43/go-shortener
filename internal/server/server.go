@@ -126,28 +126,26 @@ func (s *Server) batchDelete(shorts []string) error {
 
 // Start runs the HTTP or HTTPS server on the configured address.
 func (s *Server) Start() {
-	go func() {
-		s.logger.Info("starting server...")
+	s.logger.Info("starting server...")
 
-		if s.cfg.Server.FlagHTTPS {
-			err := s.echo.StartTLS(s.cfg.Server.FlagRunAddr, s.cfg.Server.FlagCertPath, s.cfg.Server.FlagKeyPath)
+	if s.cfg.Server.FlagHTTPS {
+		err := s.echo.StartTLS(s.cfg.Server.FlagRunAddr, s.cfg.Server.FlagCertPath, s.cfg.Server.FlagKeyPath)
+		if errors.Is(err, http.ErrServerClosed) {
+			s.logger.Info("echo shutdown complete")
+		} else {
+			s.logger.Error(err, "start http server")
+		}
+	} else {
+		err := s.echo.Start(s.cfg.Server.FlagRunAddr)
+		if err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				s.logger.Info("echo shutdown complete")
 			} else {
 				s.logger.Error(err, "start http server")
 			}
-		} else {
-			err := s.echo.Start(s.cfg.Server.FlagRunAddr)
-			if err != nil {
-				if errors.Is(err, http.ErrServerClosed) {
-					s.logger.Info("echo shutdown complete")
-				} else {
-					s.logger.Error(err, "start http server")
-				}
 
-			}
 		}
-	}()
+	}
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
