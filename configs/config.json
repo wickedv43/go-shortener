@@ -1,0 +1,9 @@
+{
+  "server_address": ":8080",
+  "base_url": "http://localhost:8080",
+  "file_storage_path": "./db/storage.json",
+  "server_crt_path": "./cert/server.crt",
+  "server_key_path": "./cert/server.key",
+  "database_dsn": "",
+  "enable_https": true
+}
