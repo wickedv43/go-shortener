@@ -154,6 +154,23 @@ func (s *PostgresStorage) BatchDelete(short []string) error {
 	return nil
 }
 
+// Stats returns users and urls len
+func (s *PostgresStorage) Stats() (int, int, error) {
+	var urlsCount, usersCount int
+
+	err := s.pgDB.QueryRow(`SELECT COUNT(*) FROM urls`).Scan(&urlsCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	err = s.pgDB.QueryRow(`SELECT COUNT(DISTINCT uuid) FROM urls`).Scan(&usersCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return urlsCount, usersCount, nil
+}
+
 // Close terminates the connection to the PostgreSQL database.
 func (s *PostgresStorage) Close() error {
 	return s.pgDB.Close()

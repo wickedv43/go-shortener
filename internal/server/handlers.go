@@ -246,3 +246,22 @@ func (s *Server) DeleteUserURLs(c echo.Context) error {
 
 	return nil
 }
+
+func (s *Server) Stats(c echo.Context) error {
+	type response struct {
+		URLS  int `json:"urls"`
+		Users int `json:"users"`
+	}
+
+	var (
+		resp response
+		err  error
+	)
+
+	resp.URLS, resp.Users, err = s.storage.Stats()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "server error")
+	}
+
+	return c.JSON(http.StatusOK, &resp)
+}

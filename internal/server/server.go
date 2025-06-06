@@ -63,6 +63,11 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.echo.GET(`/api/user/urls`, s.UserURLs)
 	s.echo.DELETE(`/api/user/urls`, s.DeleteUserURLs)
 
+	// trusted subnet?
+	trustedIP := s.echo.Group("")
+	trustedIP.Use(s.TrustedSubnetMiddleware)
+	trustedIP.GET(`/api/internal/stats`, s.Stats)
+
 	return s, nil
 }
 

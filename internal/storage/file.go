@@ -168,6 +168,43 @@ func (s *FileStorage) Save(_ context.Context, d Data) error {
 	return nil
 }
 
+// Stats returns the number of URLs and unique users in the file storage.
+func (s *FileStorage) Stats() (int, int, error) {
+	file, err := s.Open()
+	if err != nil {
+		return 0, 0, errors.Wrap(err, "open file")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	urlCount := 0
+	userSet := make(map[int]struct{})
+
+	for scanner.Scan() {
+		var d Data
+		line := scanner.Bytes()
+
+		if len(line) == 0 {
+			continue
+		}
+
+		if err = json.Unmarshal(line, &d); err != nil {
+			return 0, 0, errors.Wrap(err, "unmarshal data")
+		}
+
+		urlCount++
+		userSet[d.UUID] = struct{}{}
+	}
+
+	if err = scanner.Err(); err != nil {
+		return 0, 0, errors.Wrap(err, "scan file")
+	}
+
+	userCount := len(userSet)
+
+	return urlCount, userCount, nil
+}
+
 // Open opens the configured file in append/read-write mode, creating it if it doesn't exist.
 func (s *FileStorage) Open() (*os.File, error) {
 	return os.OpenFile(s.cfg.Server.FlagStoragePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)

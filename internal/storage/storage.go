@@ -32,6 +32,9 @@ type DataKeeper interface {
 	// BatchDelete removes multiple short URLs in a single operation.
 	BatchDelete(short []string) error
 
+	// Stats returns len users and urls in db
+	Stats() (urls int, users int, err error)
+
 	// HealthCheck verifies connectivity with the storage backend.
 	HealthCheck() error
 

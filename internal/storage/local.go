@@ -87,3 +87,17 @@ func (l *LocalStorage) Shutdown(_ context.Context) error {
 	l.log.Info("Shutting down local storage (no-op)")
 	return nil
 }
+
+// Stats return users count and urls
+func (l *LocalStorage) Stats() (int, int, error) {
+	urlCount := len(l.LocMem)
+
+	userSet := make(map[int]struct{})
+	for _, d := range l.LocMem {
+		userSet[d.UUID] = struct{}{}
+	}
+
+	userCount := len(userSet)
+
+	return urlCount, userCount, nil
+}

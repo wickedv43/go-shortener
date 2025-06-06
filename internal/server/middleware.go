@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net"
 	"net/http"
 	"time"
 
@@ -48,6 +49,32 @@ func (s *Server) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if c.Request().Method == "OPTIONS" {
 			return c.JSON(http.StatusNoContent, "")
+		}
+
+		return next(c)
+	}
+}
+
+func (s *Server) TrustedSubnetMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if s.cfg.Server.FlagTrustedSubnet == "" {
+			return c.JSON(http.StatusForbidden, nil)
+		}
+
+		realIP := c.Request().Header.Get("X-Real-IP")
+		if realIP == "" {
+			return c.JSON(http.StatusForbidden, "missing X-Real-IP header")
+		}
+
+		_, subnet, err := net.ParseCIDR(s.cfg.Server.FlagTrustedSubnet)
+		if err != nil {
+			s.logger.Error("invalid trusted subnet", err)
+			return c.JSON(http.StatusInternalServerError, "invalid server config")
+		}
+
+		ip := net.ParseIP(realIP)
+		if ip == nil || !subnet.Contains(ip) {
+			return c.JSON(http.StatusForbidden, "access forbidden")
 		}
 
 		return next(c)

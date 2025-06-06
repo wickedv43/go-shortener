@@ -33,6 +33,8 @@ type Server struct {
 	FlagKeyPath  string `json:"server_ket_path"` // Path to key (NB: используем "ket" как в JSON)
 	FlagHTTPS    bool   `json:"enable_https"`    // Enable HTTPS flag
 
+	FlagTrustedSubnet string `json:"trusted_subnet"` //Trusted subnet
+
 	FlagConfigPath string `json:"-"` // Path to JSON config file (не парсится из JSON)
 }
 
@@ -68,6 +70,7 @@ func NewConfig(i do.Injector) (*Config, error) {
 	flag.StringVar(&cfg.Server.FlagCertPath, "sc", "./cert/server.crt", "path to TLS certificate file")
 	flag.StringVar(&cfg.Server.FlagKeyPath, "sk", "./cert/server.key", "path to TLS certificate file")
 	flag.BoolVar(&cfg.Server.FlagHTTPS, "s", false, "use HTTPS")
+	flag.StringVar(&cfg.Server.FlagTrustedSubnet, "t", "", "trusted subnet")
 
 	// override with env vars if present
 	err = godotenv.Load()
@@ -95,6 +98,10 @@ func NewConfig(i do.Injector) (*Config, error) {
 	}
 	if envHTTPS := os.Getenv("ENABLE_HTTPS"); envHTTPS != "" {
 		cfg.Server.FlagHTTPS = envHTTPS == "true"
+	}
+
+	if TrustedSubnet := os.Getenv("TRUSTED_SUBNET"); TrustedSubnet != "" {
+		cfg.Server.FlagTrustedSubnet = TrustedSubnet
 	}
 
 	if cfg.Server.FlagSuffixAddr != "" {
