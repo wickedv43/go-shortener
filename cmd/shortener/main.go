@@ -4,8 +4,8 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
-	"os/signal"
 	"syscall"
 
 	"github.com/samber/do/v2"
@@ -23,6 +23,7 @@ var (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	i := do.New()
 
@@ -35,23 +36,20 @@ func main() {
 	do.Provide(i, storage.NewPostgresStorage)
 
 	log := do.MustInvoke[*logger.Logger](i)
-	log.Info("BuildVersion: ", buildVersion)
-	log.Info("BuildDate: ", buildDate)
-	log.Info("BuildCommit: ", buildCommit)
+	info := fmt.Sprintf("\n-----------------------\n"+
+		"Build Version: %s\n"+
+		"Build Date: %s\n"+
+		"Build Commit: %s\n"+
+		"-----------------------\n", buildVersion, buildDate, buildCommit)
+	log.Info(info)
 
 	provideStorageByPriority(i)
 
 	flag.Parse()
 
-	do.MustInvoke[*server.Server](i).Start()
+	go do.MustInvoke[*server.Server](i).Start()
 
-	signalCh := make(chan os.Signal, 1)
 	signals := []os.Signal{syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT, os.Interrupt}
-
-	signal.Notify(signalCh, signals...)
-	<-signalCh
-
-	cancel()
 
 	_, err := i.ShutdownOnSignalsWithContext(ctx, signals...)
 	if err != nil {
