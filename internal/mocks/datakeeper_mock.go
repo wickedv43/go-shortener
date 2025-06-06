@@ -126,3 +126,19 @@ func (mr *MockDataKeeperMockRecorder) Save(c, d any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockDataKeeper)(nil).Save), c, d)
 }
+
+// Stats mocks base method.
+func (m *MockDataKeeper) Stats() (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stats")
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Stats indicates an expected call of Stats.
+func (mr *MockDataKeeperMockRecorder) Stats() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockDataKeeper)(nil).Stats))
+}
