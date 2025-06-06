@@ -247,6 +247,7 @@ func (s *Server) DeleteUserURLs(c echo.Context) error {
 	return nil
 }
 
+// Stats returns count urls and users
 func (s *Server) Stats(c echo.Context) error {
 	type response struct {
 		URLS  int `json:"urls"`
