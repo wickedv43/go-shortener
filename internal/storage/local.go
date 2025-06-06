@@ -82,6 +82,7 @@ func (l *LocalStorage) Close() error {
 	return nil
 }
 
+// Shutdown local storage
 func (l *LocalStorage) Shutdown(_ context.Context) error {
 	l.log.Info("Shutting down local storage (no-op)")
 	return nil

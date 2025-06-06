@@ -178,6 +178,7 @@ func (s *FileStorage) RemoveFile() error {
 	return os.Remove(s.cfg.Server.FlagStoragePath)
 }
 
+// Shutdown file storage
 func (s *FileStorage) Shutdown() error {
 	if s.file != nil {
 		err := s.file.Close()

@@ -148,6 +148,7 @@ func (s *Server) Start() {
 	}
 }
 
+// Shutdown server
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.echo.Shutdown(ctx)
 }

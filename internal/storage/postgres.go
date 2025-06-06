@@ -159,6 +159,7 @@ func (s *PostgresStorage) Close() error {
 	return s.pgDB.Close()
 }
 
+// Shutdown postgres
 func (s *PostgresStorage) Shutdown() error {
 	s.log.Info("postgres closed")
 	return s.pgDB.Close()
