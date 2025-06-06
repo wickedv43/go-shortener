@@ -55,6 +55,7 @@ func (s *Server) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// TrustedSubnetMiddleware checks ip
 func (s *Server) TrustedSubnetMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if s.cfg.Server.FlagTrustedSubnet == "" {
