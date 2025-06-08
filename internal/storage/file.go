@@ -42,7 +42,8 @@ func NewFileStorage(i do.Injector) (*FileStorage, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "create file")
 	}
-	defer storage.file.Close()
+
+	_ = storage.file.Close()
 
 	return storage, err
 }

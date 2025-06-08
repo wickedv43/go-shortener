@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServer_gen(t *testing.T) {
+func TestURLService_Gen(t *testing.T) {
 	u := &URLService{}
 	input := []string{"a", "b", "c"}
 	ch := u.Gen(input...)
@@ -19,7 +19,7 @@ func TestServer_gen(t *testing.T) {
 	require.ElementsMatch(t, input, result)
 }
 
-func TestServer_fanIn(t *testing.T) {
+func TestURLService_FanIn(t *testing.T) {
 	u := &URLService{}
 
 	ch1 := make(chan string)

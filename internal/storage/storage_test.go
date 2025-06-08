@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/samber/do/v2"
@@ -51,22 +50,11 @@ func TestDataKeeperImplementations(t *testing.T) {
 	})
 
 	t.Run("FileStorage", func(t *testing.T) {
-		tmp := filepath.Join(t.TempDir(), "file_storage.json")
 
-		i := do.New()
-		do.Provide(i, func(i do.Injector) (*config.Config, error) {
-			return &config.Config{
-				Server: config.Server{FlagStoragePath: tmp},
-			}, nil
-		})
-		do.Provide(i, logger.NewLogger)
-
-		st, err := NewFileStorage(i)
-		require.NoError(t, err)
+		st := newTestFileStorage(t)
 
 		runDataKeeperComplianceTests(t, "FileStorage", st)
 
-		_ = os.Remove(tmp)
 	})
 
 	t.Run("PostgresStorage", func(t *testing.T) {

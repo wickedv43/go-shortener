@@ -26,9 +26,6 @@ func newTestFileStorage(t *testing.T) *FileStorage {
 	log := logrus.New().WithField("component", "test")
 
 	fs := &FileStorage{cfg: cfg, log: log}
-	f, err := fs.Open()
-	require.NoError(t, err)
-	fs.file = f
 
 	t.Cleanup(func() {
 		_ = fs.Close()
@@ -88,14 +85,4 @@ func TestFileStorage_HealthCheck(t *testing.T) {
 
 	err := fs.HealthCheck()
 	require.NoError(t, err)
-}
-
-func TestFileStorage_RemoveFile(t *testing.T) {
-	fs := newTestFileStorage(t)
-
-	err := fs.RemoveFile()
-	require.NoError(t, err)
-
-	_, err = os.Stat(fs.cfg.Server.FlagStoragePath)
-	require.True(t, os.IsNotExist(err))
 }

@@ -38,6 +38,7 @@ func TestServer_create_success(t *testing.T) {
 
 func TestServer_create_invalidContentType(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
+
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"url":"https://example.com"}`))
