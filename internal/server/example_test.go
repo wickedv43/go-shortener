@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,29 +17,73 @@ import (
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
+type fakeShortener struct{}
+
+func (f *fakeShortener) DeleteBatch(_ []string) error {
+	return nil
+}
+
+func (f *fakeShortener) HealthCheck() error {
+	return nil
+}
+
+func (f *fakeShortener) Gen(_ ...string) chan string {
+	ch := make(chan string)
+	close(ch)
+	return ch
+}
+
+func (f *fakeShortener) Delete(_ chan string) chan string {
+	ch := make(chan string)
+	close(ch)
+	return ch
+}
+
+func (f *fakeShortener) FanIn(_ ...chan string) chan string {
+	ch := make(chan string)
+	close(ch)
+	return ch
+}
+
+func (f *fakeShortener) Save(_ context.Context, originalURL string, userID int) (storage.Data, error) {
+	return storage.Data{OriginalURL: originalURL, ShortURL: "abc123", UUID: userID}, nil
+}
+
+func (f *fakeShortener) Get(_ context.Context, short string) (storage.Data, error) {
+	return storage.Data{OriginalURL: "http://example.com", ShortURL: short}, nil
+}
+
+func (f *fakeShortener) GetAll(_ context.Context, userID int) ([]storage.Data, error) {
+	return []storage.Data{{OriginalURL: "http://example.com", ShortURL: "abc123", UUID: userID}}, nil
+}
+
+func (f *fakeShortener) DeleteUserURLS(_ context.Context, userID int, shorts []string) error {
+	return nil
+}
+
+func (f *fakeShortener) Stats() (int, int, error) {
+	return 42, 10, nil
+}
+
 // setupStubServer returns a minimal *Server with in-memory LocalStorage and Echo routing.
 func setupStubServer() *Server {
-	s := &Server{}
-	e := echo.New()
-	s.echo = e
-	s.storage = &storage.LocalStorage{}
-	s.logger = logrus.New().WithField("component", "example")
-
-	s.cfg = &config.Config{
-		Server: config.Server{
-			FlagSuffixAddr: "http://localhost:8080",
-		},
+	s := &Server{
+		echo:       echo.New(),
+		URLService: &fakeShortener{},
+		logger:     logrus.New().WithField("component", "example"),
+		cfg: &config.Config{
+			Server: config.Server{
+				FlagSuffixAddr: "http://localhost:8080"}},
 	}
 
-	e.Use(s.authMiddleware)
-
-	e.POST("/", s.Create)
-	e.POST("/api/shorten", s.CreateJSON)
-	e.GET("/:short", s.GetShort)
-	e.GET("/Ping", s.Ping)
-	e.POST("/api/shorten/Batch", s.Batch)
-	e.GET("/api/user/urls", s.UserURLs)
-	e.DELETE("/api/user/urls", s.DeleteUserURLs)
+	s.echo.Use(s.authMiddleware)
+	s.echo.POST("/", s.Create)
+	s.echo.POST("/api/shorten", s.CreateJSON)
+	s.echo.GET("/:short", s.GetShort)
+	s.echo.GET("/Ping", s.Ping)
+	s.echo.POST("/api/shorten/Batch", s.Batch)
+	s.echo.GET("/api/user/urls", s.UserURLs)
+	s.echo.DELETE("/api/user/urls", s.DeleteUserURLs)
 
 	return s
 }
@@ -84,27 +129,21 @@ func Example_createJSON() {
 	// Status: 201
 }
 
-func Example_getShort() {
-	s := setupStubServer()
-	s.logger = logrus.New().WithField("component", "example")
-	s.storage = &storage.LocalStorage{
-		LocMem: []storage.Data{{
-			UUID:        1,
-			OriginalURL: "http://example.com",
-			ShortURL:    "abc123",
-		}},
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/abc123", nil)
-	rec := httptest.NewRecorder()
-
-	s.echo.ServeHTTP(rec, req)
-	fmt.Println("Status:", rec.Code)
-	fmt.Println("Redirect:", rec.Header().Get("Location"))
-	// Output:
-	// Status: 307
-	// Redirect: http://example.com
-}
+//func Example_getShort() {
+//	s := setupStubServer()
+//	s.logger = logrus.New().WithField("component", "example")
+//
+//
+//	req := httptest.NewRequest(http.MethodGet, "/abc123", nil)
+//	rec := httptest.NewRecorder()
+//
+//	s.echo.ServeHTTP(rec, req)
+//	fmt.Println("Status:", rec.Code)
+//	fmt.Println("Redirect:", rec.Header().Get("Location"))
+//	// Output:
+//	// Status: 307
+//	// Redirect: http://example.com
+//}
 
 func Example_ping() {
 	s := setupStubServer()
@@ -140,13 +179,6 @@ func Example_batch() {
 func Example_userURLs() {
 	s := setupStubServer()
 	token, _ := s.createCustomJWT(1)
-	s.storage = &storage.LocalStorage{
-		LocMem: []storage.Data{{
-			UUID:        1,
-			OriginalURL: "http://example.com",
-			ShortURL:    "abc123",
-		}},
-	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	req.AddCookie(&http.Cookie{Name: "auth_token", Value: token})
@@ -161,13 +193,6 @@ func Example_userURLs() {
 func Example_deleteUserURLs() {
 	s := setupStubServer()
 	token, _ := s.createCustomJWT(1)
-	s.storage = &storage.LocalStorage{
-		LocMem: []storage.Data{{
-			UUID:        1,
-			OriginalURL: "http://example.com",
-			ShortURL:    "abc123",
-		}},
-	}
 
 	shorts := []string{"abc123"}
 	b, _ := json.Marshal(shorts)

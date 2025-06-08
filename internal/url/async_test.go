@@ -1,4 +1,4 @@
-package server
+package url
 
 import (
 	"testing"
@@ -7,9 +7,9 @@ import (
 )
 
 func TestServer_gen(t *testing.T) {
-	s := &Server{}
+	u := &URLService{}
 	input := []string{"a", "b", "c"}
-	ch := s.gen(input...)
+	ch := u.Gen(input...)
 
 	var result []string
 	for val := range ch {
@@ -20,7 +20,7 @@ func TestServer_gen(t *testing.T) {
 }
 
 func TestServer_fanIn(t *testing.T) {
-	s := &Server{}
+	u := &URLService{}
 
 	ch1 := make(chan string)
 	ch2 := make(chan string)
@@ -37,7 +37,7 @@ func TestServer_fanIn(t *testing.T) {
 		ch2 <- "d"
 	}()
 
-	out := s.fanIn(ch1, ch2)
+	out := u.FanIn(ch1, ch2)
 
 	var result []string
 	for val := range out {

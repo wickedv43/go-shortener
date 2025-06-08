@@ -12,7 +12,7 @@ import (
 )
 
 func BenchmarkGetShort(b *testing.B) {
-	srv := setupTestServer(b, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(b, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			Get(gomock.Any(), "abc123").
 			Return(storage.Data{

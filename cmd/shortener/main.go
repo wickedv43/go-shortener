@@ -13,6 +13,7 @@ import (
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/server"
 	"github.com/wickedv43/go-shortener/internal/storage"
+	"github.com/wickedv43/go-shortener/internal/url"
 )
 
 var (
@@ -34,6 +35,10 @@ func main() {
 	do.Provide(i, storage.NewFileStorage)
 	do.Provide(i, storage.NewLocalStorage)
 	do.Provide(i, storage.NewPostgresStorage)
+
+	do.Provide(i, func(i do.Injector) (url.Shortener, error) {
+		return url.NewService(i)
+	})
 
 	log := do.MustInvoke[*logger.Logger](i)
 	info := fmt.Sprintf("\n-----------------------\n"+

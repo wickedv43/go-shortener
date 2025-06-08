@@ -14,7 +14,9 @@ tasks:
     cmds:
       - go run ./cmd/shortener/. -c="./configs/config.json"
   mock:
-    mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
+    cmds:
+      - mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
+      - mockgen -source=internal/url/interface.go -destination=internal/mocks/shortener.go -package=mocks
 
   protoc:
     cmds:

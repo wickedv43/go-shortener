@@ -7,27 +7,25 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/pprof"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/wickedv43/go-shortener/internal/config"
-	"github.com/wickedv43/go-shortener/internal/logger"
-	"github.com/wickedv43/go-shortener/internal/storage"
-
 	"github.com/pkg/errors"
 	"github.com/samber/do/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/logger"
+	"github.com/wickedv43/go-shortener/internal/url"
 )
 
 // Server represents the HTTP server and its dependencies.
 type Server struct {
-	echo    *echo.Echo         // Echo HTTP server instance.
-	cfg     *config.Config     // Configuration settings.
-	storage storage.DataKeeper // Interface to storage layer.
-	logger  *logrus.Entry      // Structured logger.
+	echo       *echo.Echo     // Echo HTTP server instance.
+	cfg        *config.Config // Configuration settings.
+	URLService url.Shortener
+	logger     *logrus.Entry // Structured logger.
 }
 
 // NewServer creates and configures a new Server instance using dependency injection.
@@ -41,9 +39,10 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.echo = echo.New()
 	s.echo.Use(middleware.Recover(), s.gzipMiddleware, s.authMiddleware, s.logHandler, s.CORSMiddleware)
 
+	s.URLService = do.MustInvoke[url.Shortener](i)
+
 	s.cfg = do.MustInvoke[*config.Config](i)
 	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
-	s.storage = do.MustInvoke[storage.DataKeeper](i)
 
 	// pprof endpoints
 	s.echo.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
@@ -69,64 +68,6 @@ func NewServer(i do.Injector) (*Server, error) {
 	trustedIP.GET(`/api/internal/stats`, s.Stats)
 
 	return s, nil
-}
-
-// save persists a new URL or returns ErrConflict if it already exists.
-func (s *Server) save(ctx context.Context, expand string, userID int) (storage.Data, error) {
-	if expand == "" {
-		return storage.Data{}, errors.New("empty url")
-	}
-
-	data, err := s.storage.Get(ctx, expand)
-	if err != nil {
-		data.OriginalURL = expand
-		data.ShortURL = ShortURL()
-		data.UUID = userID
-
-		err = s.storage.Save(ctx, data)
-		if err != nil {
-			return storage.Data{}, errors.Wrap(err, "save error")
-		}
-		return data, nil
-	}
-
-	return data, ErrConflict
-}
-
-// get retrieves URL data from storage by its short alias.
-func (s *Server) get(c echo.Context, short string) (storage.Data, error) {
-	ctx := c.Request().Context()
-
-	data, err := s.storage.Get(ctx, short)
-	if err != nil {
-		return storage.Data{}, errors.Wrap(err, "get error")
-	}
-	return data, nil
-}
-
-// getAll retrieves all stored URLs belonging to the specified user.
-func (s *Server) getAll(c echo.Context, userID int) ([]storage.Data, error) {
-	ctx := c.Request().Context()
-
-	data, err := s.storage.GetAll(ctx, userID)
-	if err != nil {
-		return nil, errors.Wrap(err, "getAll error")
-	}
-
-	if len(data) == 0 {
-		return []storage.Data{}, ErrNoContent
-	}
-
-	for _, d := range data {
-		d.ShortURL = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, d.ShortURL)
-	}
-
-	return data, nil
-}
-
-// batchDelete removes a Batch of short URLs from storage.
-func (s *Server) batchDelete(shorts []string) error {
-	return s.storage.BatchDelete(shorts)
 }
 
 // Start runs the HTTP or HTTPS server on the configured address.

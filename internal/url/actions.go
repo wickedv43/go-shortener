@@ -1,4 +1,4 @@
-package server
+package url
 
 import "math/rand"
 

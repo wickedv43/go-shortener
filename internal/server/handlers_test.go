@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,48 +8,19 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/require"
+	"github.com/wickedv43/go-shortener/internal/url"
 	"go.uber.org/mock/gomock"
 
-	"github.com/wickedv43/go-shortener/internal/config"
-	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/mocks"
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
 
-func setupTestServer(tb testing.TB, configureMock func(*mocks.MockDataKeeper)) *Server {
-	tb.Helper()
-
-	ctrl := gomock.NewController(tb)
-
-	container := do.New()
-
-	do.Provide(container, func(i do.Injector) (*config.Config, error) {
-		return &config.Config{Server: config.Server{FlagRunAddr: ":8080"}}, nil
-	})
-	do.Provide(container, logger.NewLogger)
-
-	mockKeeper := mocks.NewMockDataKeeper(ctrl)
-	configureMock(mockKeeper)
-
-	do.Provide(container, func(i do.Injector) (storage.DataKeeper, error) {
-		return mockKeeper, nil
-	})
-
-	do.Provide(container, NewServer)
-	return do.MustInvoke[*Server](container)
-}
-
 func TestServer_create_success(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://example.com").
-			Return(storage.Data{}, sql.ErrNoRows)
-
-		mock.EXPECT().
-			Save(gomock.Any(), gomock.AssignableToTypeOf(storage.Data{})).
-			Return(nil)
+			Save(gomock.Any(), "https://example.com", 123).
+			Return(storage.Data{ShortURL: "abc123"}, nil)
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -63,11 +33,12 @@ func TestServer_create_success(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, rec.Code)
 	require.Equal(t, "text/plain", rec.Header().Get("Content-Type"))
-	require.Contains(t, rec.Body.String(), "/")
+	require.Contains(t, rec.Body.String(), "/abc123")
 }
 
 func TestServer_create_invalidContentType(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
+	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"url":"https://example.com"}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -78,11 +49,11 @@ func TestServer_create_invalidContentType(t *testing.T) {
 	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
-	require.Contains(t, rec.Body.String(), "Bad request")
+	require.Contains(t, rec.Body.String(), url.ErrBadRequest.Error())
 }
 
 func TestServer_create_unauthorized(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlain)
@@ -93,7 +64,7 @@ func TestServer_create_unauthorized(t *testing.T) {
 	err := srv.Create(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
-	require.Contains(t, rec.Body.String(), "userID is not of type int")
+	require.Contains(t, rec.Body.String(), url.ErrUnauthorized.Error())
 }
 
 func TestServer_create_conflict(t *testing.T) {
@@ -103,10 +74,10 @@ func TestServer_create_conflict(t *testing.T) {
 		UUID:        123,
 	}
 
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://example.com").
-			Return(existing, nil)
+			Save(gomock.Any(), "https://example.com", 123).
+			Return(existing, url.ErrConflict)
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -122,14 +93,10 @@ func TestServer_create_conflict(t *testing.T) {
 }
 
 func TestServer_create_saveError(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://example.com").
-			Return(storage.Data{}, sql.ErrNoRows)
-
-		mock.EXPECT().
-			Save(gomock.Any(), gomock.Any()).
-			Return(errors.New("save error"))
+			Save(gomock.Any(), "https://example.com", 123).
+			Return(storage.Data{}, errors.New("save error"))
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -144,14 +111,10 @@ func TestServer_create_saveError(t *testing.T) {
 }
 
 func TestServer_createJSON(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://example.com").
-			Return(storage.Data{}, sql.ErrNoRows)
-
-		mock.EXPECT().
-			Save(gomock.Any(), gomock.AssignableToTypeOf(storage.Data{})).
-			Return(nil)
+			Save(gomock.Any(), "https://example.com", 123).
+			Return(storage.Data{ShortURL: "abc123"}, nil)
 	})
 
 	reqBody := `{"url":"https://example.com"}`
@@ -165,7 +128,7 @@ func TestServer_createJSON(t *testing.T) {
 	err := srv.CreateJSON(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, rec.Code)
-	require.Contains(t, rec.Body.String(), "/") // проверяем, что есть ShortURL
+	require.Contains(t, rec.Body.String(), "/")
 }
 
 func TestServer_createJSON_conflict(t *testing.T) {
@@ -175,10 +138,10 @@ func TestServer_createJSON_conflict(t *testing.T) {
 		UUID:        123,
 	}
 
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://example.com").
-			Return(existing, nil)
+			Save(gomock.Any(), "https://example.com", 123).
+			Return(existing, url.ErrConflict)
 	})
 
 	reqBody := `{"url":"https://example.com"}`
@@ -192,11 +155,11 @@ func TestServer_createJSON_conflict(t *testing.T) {
 	err := srv.CreateJSON(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusConflict, rec.Code)
-	require.Contains(t, rec.Body.String(), "abc123") // должен вернуть существующий short
+	require.Contains(t, rec.Body.String(), "abc123")
 }
 
 func TestServer_getShort_ok(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			Get(gomock.Any(), "abc123").
 			Return(storage.Data{
@@ -219,7 +182,7 @@ func TestServer_getShort_ok(t *testing.T) {
 }
 
 func TestServer_getShort_gone(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			Get(gomock.Any(), "abc123").
 			Return(storage.Data{
@@ -238,11 +201,11 @@ func TestServer_getShort_gone(t *testing.T) {
 	err := srv.GetShort(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusGone, rec.Code)
-	require.Contains(t, rec.Body.String(), "Gone")
+	require.Contains(t, rec.Body.String(), url.ErrGone.Error())
 }
 
 func TestServer_getShort_internalError(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			Get(gomock.Any(), "abc123").
 			Return(storage.Data{}, errors.New("db down"))
@@ -257,26 +220,18 @@ func TestServer_getShort_internalError(t *testing.T) {
 	err := srv.GetShort(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
-	require.Contains(t, rec.Body.String(), "Server error")
+	require.Contains(t, rec.Body.String(), url.ErrInternal.Error())
 }
 
 func TestServer_batch_success(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://a.com").
-			Return(storage.Data{}, sql.ErrNoRows)
+			Save(gomock.Any(), "https://a.com", 42).
+			Return(storage.Data{ShortURL: "shortA"}, nil)
 
 		mock.EXPECT().
-			Save(gomock.Any(), gomock.AssignableToTypeOf(storage.Data{})).
-			Return(nil)
-
-		mock.EXPECT().
-			Get(gomock.Any(), "https://b.com").
-			Return(storage.Data{}, sql.ErrNoRows)
-
-		mock.EXPECT().
-			Save(gomock.Any(), gomock.AssignableToTypeOf(storage.Data{})).
-			Return(nil)
+			Save(gomock.Any(), "https://b.com", 42).
+			Return(storage.Data{ShortURL: "shortB"}, nil)
 	})
 
 	reqBody := `[{"correlation_id": "1", "original_url": "https://a.com"},
@@ -297,7 +252,7 @@ func TestServer_batch_success(t *testing.T) {
 }
 
 func TestServer_batch_unauthorized(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`[]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -312,7 +267,7 @@ func TestServer_batch_unauthorized(t *testing.T) {
 }
 
 func TestServer_batch_invalidJSON(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`{invalid-json}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -324,11 +279,11 @@ func TestServer_batch_invalidJSON(t *testing.T) {
 	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
-	require.Contains(t, rec.Body.String(), "error")
+	require.Contains(t, rec.Body.String(), url.ErrBadRequest.Error())
 }
 
 func TestServer_batch_empty(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(`[]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -340,18 +295,14 @@ func TestServer_batch_empty(t *testing.T) {
 	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
-	require.Contains(t, rec.Body.String(), "empty")
+	require.Contains(t, rec.Body.String(), url.ErrBadRequest.Error())
 }
 
 func TestServer_batch_saveError(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
-			Get(gomock.Any(), "https://a.com").
-			Return(storage.Data{}, sql.ErrNoRows)
-
-		mock.EXPECT().
-			Save(gomock.Any(), gomock.AssignableToTypeOf(storage.Data{})).
-			Return(errors.New("save error"))
+			Save(gomock.Any(), "https://a.com", 42).
+			Return(storage.Data{}, errors.New("save error"))
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/Batch", strings.NewReader(
@@ -366,7 +317,7 @@ func TestServer_batch_saveError(t *testing.T) {
 	err := srv.Batch(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
-	require.Contains(t, rec.Body.String(), "save error")
+	require.Contains(t, rec.Body.String(), url.ErrInternal.Error())
 }
 
 func TestServer_userURLs_success(t *testing.T) {
@@ -376,7 +327,7 @@ func TestServer_userURLs_success(t *testing.T) {
 		{OriginalURL: "https://b.com", ShortURL: "abc2"},
 	}
 
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			GetAll(gomock.Any(), userID).
 			Return(urls, nil)
@@ -396,7 +347,7 @@ func TestServer_userURLs_success(t *testing.T) {
 }
 
 func TestServer_userURLs_unauthorized(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	rec := httptest.NewRecorder()
@@ -406,14 +357,14 @@ func TestServer_userURLs_unauthorized(t *testing.T) {
 	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
-	require.Contains(t, rec.Body.String(), "userID is not of type int")
+	require.Contains(t, rec.Body.String(), url.ErrUnauthorized.Error())
 }
 
 func TestServer_userURLs_noContent(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			GetAll(gomock.Any(), 42).
-			Return(nil, ErrNoContent)
+			Return(nil, url.ErrNoContent)
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
@@ -427,7 +378,7 @@ func TestServer_userURLs_noContent(t *testing.T) {
 }
 
 func TestServer_userURLs_internalError(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {
 		mock.EXPECT().
 			GetAll(gomock.Any(), 42).
 			Return(nil, errors.New("db down"))
@@ -441,11 +392,11 @@ func TestServer_userURLs_internalError(t *testing.T) {
 	err := srv.UserURLs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
-	require.Contains(t, rec.Body.String(), "getting data")
+	require.Contains(t, rec.Body.String(), url.ErrInternal.Error())
 }
 
 func TestServer_deleteUserURLs_bindError(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(`{bad json}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -459,7 +410,7 @@ func TestServer_deleteUserURLs_bindError(t *testing.T) {
 }
 
 func TestServer_deleteUserURLs_emptyList(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(`[]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

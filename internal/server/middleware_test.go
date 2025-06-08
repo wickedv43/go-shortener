@@ -11,7 +11,7 @@ import (
 )
 
 func TestLogHandler(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 	rec := httptest.NewRecorder()
 	c := srv.echo.NewContext(req, rec)
@@ -30,7 +30,7 @@ func TestLogHandler(t *testing.T) {
 }
 
 func TestCORSMiddleware(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 	req := httptest.NewRequest(http.MethodOptions, "/", nil)
 	rec := httptest.NewRecorder()
 	c := srv.echo.NewContext(req, rec)

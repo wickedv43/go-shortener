@@ -11,7 +11,7 @@ import (
 )
 
 func TestAuthMiddleware_NewCookie(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
@@ -45,7 +45,7 @@ func TestAuthMiddleware_NewCookie(t *testing.T) {
 }
 
 func TestAuthMiddleware_ValidCookie(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	token, err := srv.createJWT()
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestAuthMiddleware_ValidCookie(t *testing.T) {
 }
 
 func TestAuthMiddleware_InvalidToken(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{

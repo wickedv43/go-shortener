@@ -14,7 +14,7 @@ import (
 )
 
 func TestGzipMiddleware_SetsResponseHeader(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Accept-Encoding", "gzip")
@@ -37,7 +37,7 @@ func TestGzipMiddleware_SetsResponseHeader(t *testing.T) {
 }
 
 func TestGzipMiddleware_DecodesGzippedRequest(t *testing.T) {
-	srv := setupTestServer(t, func(mock *mocks.MockDataKeeper) {})
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
