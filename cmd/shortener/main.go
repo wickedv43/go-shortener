@@ -37,7 +37,7 @@ func main() {
 	do.Provide(i, storage.NewPostgresStorage)
 
 	do.Provide(i, func(i do.Injector) (url.Shortener, error) {
-		return url.NewService(i)
+		return url.NewURLService(i)
 	})
 
 	log := do.MustInvoke[*logger.Logger](i)

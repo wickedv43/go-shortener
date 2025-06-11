@@ -1,3 +1,7 @@
+// Package url provides a URL shortening service interface and implementation.
+//
+// The package defines core service logic for saving, retrieving, and deleting short URLs,
+// as well as providing statistics and health checks for the underlying storage.
 package url
 
 import (
@@ -15,7 +19,7 @@ type URLService struct {
 	storage storage.DataKeeper // Interface to storage layer.
 }
 
-func NewService(i do.Injector) (*URLService, error) {
+func NewURLService(i do.Injector) (*URLService, error) {
 	u, err := do.InvokeStruct[URLService](i)
 	if err != nil {
 		return nil, errors.Wrap(err, "invoke struct error")

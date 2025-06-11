@@ -190,10 +190,6 @@ func (s *Server) UserURLs(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, url.ErrInternal.Error())
 	}
 
-	for i := range urls {
-		urls[i].ShortURL = fmt.Sprintf("%s/%s", s.cfg.Server.FlagSuffixAddr, urls[i].ShortURL)
-	}
-
 	return c.JSON(http.StatusOK, urls)
 }
 
