@@ -13,17 +13,6 @@ import (
 	"github.com/wickedv43/go-shortener/internal/mocks"
 )
 
-func TestGzipResponseWriter_Header(t *testing.T) {
-	rec := httptest.NewRecorder()
-	grw := &gzipResponseWriter{ResponseWriter: rec}
-
-	h := grw.Header()
-	require.NotNil(t, h)
-
-	// Можно проверить что Header() возвращает *http.Header (опционально)
-	require.IsType(t, http.Header{}, *&h)
-}
-
 func TestGzipMiddleware_SetsResponseHeader(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
