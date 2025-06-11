@@ -423,3 +423,17 @@ func TestServer_deleteUserURLs_emptyList(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusAccepted, rec.Code)
 }
+
+func TestServer_Stats(t *testing.T) {
+	server := setupTestServer(t, func(mock *mocks.MockShortener) {
+		mock.EXPECT().Stats().Return(42, 7, nil)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/internal/stats", nil)
+	req.Header.Set("X-Real-IP", "192.168.0.1") // Trusted subnet test
+
+	resp := httptest.NewRecorder()
+	server.echo.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+}

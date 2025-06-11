@@ -59,3 +59,17 @@ func TestLocalStorage_Close(t *testing.T) {
 	st := &LocalStorage{}
 	require.NoError(t, st.Close())
 }
+
+func TestLocalStorage_Stats(t *testing.T) {
+	st := &LocalStorage{}
+
+	// Добавляем 2 URL от разных пользователей
+	_ = st.Save(context.Background(), Data{UUID: 1, OriginalURL: "http://1.com", ShortURL: "a1"})
+	_ = st.Save(context.Background(), Data{UUID: 2, OriginalURL: "http://2.com", ShortURL: "a2"})
+
+	urls, users, err := st.Stats()
+
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, urls, 2)
+	require.GreaterOrEqual(t, users, 2)
+}

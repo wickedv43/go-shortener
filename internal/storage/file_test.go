@@ -86,3 +86,16 @@ func TestFileStorage_HealthCheck(t *testing.T) {
 	err := fs.HealthCheck()
 	require.NoError(t, err)
 }
+
+func TestFileStorage_Stats(t *testing.T) {
+	fs := newTestFileStorage(t)
+
+	_ = fs.Save(context.Background(), Data{UUID: 1, OriginalURL: "http://1.com", ShortURL: "a1"})
+	_ = fs.Save(context.Background(), Data{UUID: 2, OriginalURL: "http://2.com", ShortURL: "a2"})
+
+	urls, users, err := fs.Stats()
+
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, urls, 2)
+	require.GreaterOrEqual(t, users, 2)
+}

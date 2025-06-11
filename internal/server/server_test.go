@@ -1,9 +1,12 @@
 package server
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/samber/do/v2"
+	"github.com/stretchr/testify/require"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/mocks"
@@ -19,7 +22,8 @@ func setupTestServer(tb testing.TB, configureMock func(*mocks.MockShortener)) *S
 	container := do.New()
 
 	do.Provide(container, func(i do.Injector) (*config.Config, error) {
-		return &config.Config{Server: config.Server{FlagRunAddr: ":8080"}}, nil
+		return &config.Config{Server: config.Server{FlagRunAddr: ":8080",
+			FlagTrustedSubnet: "192.168.0.0/16"}}, nil
 	})
 	do.Provide(container, logger.NewLogger)
 
@@ -33,4 +37,22 @@ func setupTestServer(tb testing.TB, configureMock func(*mocks.MockShortener)) *S
 	do.Provide(container, NewServer)
 
 	return do.MustInvoke[*Server](container)
+}
+
+func TestServer_Start_Shutdown(t *testing.T) {
+	server := setupTestServer(t, func(mock *mocks.MockShortener) {})
+
+	go func() {
+		server.Start() // run Start in goroutine
+	}()
+
+	// Let it run shortly
+	time.Sleep(100 * time.Millisecond)
+
+	// Now shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	err := server.Shutdown(ctx)
+	require.NoError(t, err)
 }

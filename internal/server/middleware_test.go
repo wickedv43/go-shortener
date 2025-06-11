@@ -45,3 +45,25 @@ func TestCORSMiddleware(t *testing.T) {
 	require.Equal(t, "*", rec.Header().Get("Access-Control-Allow-Origin"))
 	require.Contains(t, rec.Header().Get("Access-Control-Allow-Methods"), "GET")
 }
+
+func TestTrustedSubnetMiddleware(t *testing.T) {
+	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
+
+	nextCalled := false
+	next := func(c echo.Context) error {
+		nextCalled = true
+		return c.String(http.StatusOK, "ok")
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Real-IP", "192.168.0.1")
+	rec := httptest.NewRecorder()
+	c := srv.echo.NewContext(req, rec)
+
+	mw := srv.TrustedSubnetMiddleware(next)
+
+	err := mw(c)
+
+	require.NoError(t, err)
+	require.True(t, nextCalled)
+}

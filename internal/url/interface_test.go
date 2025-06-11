@@ -29,6 +29,24 @@ func TestURLService_Save(t *testing.T) {
 	require.Equal(t, userID, data.UUID)
 }
 
+func TestURLService_Save_Conflict(t *testing.T) {
+	service := setupTestURLService(t, func(mock *mocks.MockDataKeeper) {
+		mock.EXPECT().Get(gomock.Any(), "http://example.com").Return(storage.Data{
+			OriginalURL: "http://example.com",
+			ShortURL:    "short123",
+			UUID:        123,
+		}, nil)
+	})
+
+	ctx := context.Background()
+	userID := 123
+	originalURL := "http://example.com"
+
+	_, err := service.Save(ctx, originalURL, userID)
+
+	require.ErrorIs(t, err, ErrConflict)
+}
+
 func TestURLService_Get(t *testing.T) {
 	service := setupTestURLService(t, func(mock *mocks.MockDataKeeper) {
 		mock.EXPECT().Get(gomock.Any(), "short123").Return(storage.Data{
@@ -46,6 +64,17 @@ func TestURLService_Get(t *testing.T) {
 	require.Equal(t, "http://example.com", data.OriginalURL)
 }
 
+func TestURLService_Get_NotFound(t *testing.T) {
+	service := setupTestURLService(t, func(mock *mocks.MockDataKeeper) {
+		mock.EXPECT().Get(gomock.Any(), "notfound").Return(storage.Data{}, errors.New("not found"))
+	})
+
+	ctx := context.Background()
+	_, err := service.Get(ctx, "notfound")
+
+	require.Error(t, err)
+}
+
 func TestURLService_GetAll(t *testing.T) {
 	service := setupTestURLService(t, func(mock *mocks.MockDataKeeper) {
 		mock.EXPECT().GetAll(gomock.Any(), 123).Return([]storage.Data{
@@ -61,6 +90,17 @@ func TestURLService_GetAll(t *testing.T) {
 	require.Len(t, data, 2)
 	require.Contains(t, data[0].ShortURL, "http://localhost:8080/")
 	require.Contains(t, data[1].ShortURL, "http://localhost:8080/")
+}
+
+func TestURLService_GetAll_NoContent(t *testing.T) {
+	service := setupTestURLService(t, func(mock *mocks.MockDataKeeper) {
+		mock.EXPECT().GetAll(gomock.Any(), 123).Return([]storage.Data{}, nil)
+	})
+
+	ctx := context.Background()
+	_, err := service.GetAll(ctx, 123)
+
+	require.ErrorIs(t, err, ErrNoContent)
 }
 
 func TestURLService_DeleteBatch(t *testing.T) {
