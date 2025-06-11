@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,5 +127,73 @@ func TestPostgresStorage_HealthCheck(t *testing.T) {
 
 	s := &PostgresStorage{pgDB: db}
 	require.NoError(t, s.HealthCheck())
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostgresStorage_Stats(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	urlsRows := sqlmock.NewRows([]string{"count"}).
+		AddRow(10)
+
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+		WillReturnRows(urlsRows)
+
+	usersRows := sqlmock.NewRows([]string{"count"}).
+		AddRow(5)
+
+	mock.ExpectQuery("SELECT COUNT\\(DISTINCT uuid\\) FROM urls").
+		WillReturnRows(usersRows)
+
+	s := &PostgresStorage{pgDB: db}
+
+	urls, users, err := s.Stats()
+	require.NoError(t, err)
+	require.Equal(t, 10, urls)
+	require.Equal(t, 5, users)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostgresStorage_Close(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	mock.ExpectClose()
+
+	s := &PostgresStorage{pgDB: db}
+
+	err = s.Close()
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostgresStorage_Shutdown(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	// Ожидаем, что Close будет вызван
+	mock.ExpectClose()
+
+	s := &PostgresStorage{pgDB: db, log: logrus.NewEntry(logrus.New())}
+
+	err = s.Shutdown()
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostgresStorage_Migrate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	mock.ExpectExec("CREATE TABLE IF NOT EXISTS urls").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	s := &PostgresStorage{pgDB: db, log: logrus.NewEntry(logrus.New())}
+
+	err = s.Migrate()
+	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }

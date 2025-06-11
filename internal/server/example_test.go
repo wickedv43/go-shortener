@@ -19,11 +19,11 @@ import (
 
 type fakeShortener struct{}
 
-func (f *fakeShortener) DeleteBatch(_ []string) error {
+func (f *fakeShortener) BatchDelete(_ []string) error {
 	return nil
 }
 
-func (f *fakeShortener) HealthCheck() error {
+func (f *fakeShortener) Ping() error {
 	return nil
 }
 

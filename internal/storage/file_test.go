@@ -99,3 +99,27 @@ func TestFileStorage_Stats(t *testing.T) {
 	require.GreaterOrEqual(t, urls, 2)
 	require.GreaterOrEqual(t, users, 2)
 }
+
+func TestFileStorage_Shutdown(t *testing.T) {
+	fs := newTestFileStorage(t)
+
+	err := fs.Shutdown()
+	require.NoError(t, err)
+}
+
+func TestFileStorage_RemoveFile(t *testing.T) {
+	fs := newTestFileStorage(t)
+
+	err := os.WriteFile(fs.cfg.Server.FlagStoragePath, []byte("test"), 0644)
+	require.NoError(t, err)
+
+	_, err = os.Stat(fs.cfg.Server.FlagStoragePath)
+	require.NoError(t, err)
+
+	err = fs.RemoveFile()
+	require.NoError(t, err)
+
+	_, err = os.Stat(fs.cfg.Server.FlagStoragePath)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+}

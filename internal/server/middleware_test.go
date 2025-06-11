@@ -49,21 +49,57 @@ func TestCORSMiddleware(t *testing.T) {
 func TestTrustedSubnetMiddleware(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
-	nextCalled := false
-	next := func(c echo.Context) error {
-		nextCalled = true
-		return c.String(http.StatusOK, "ok")
-	}
+	t.Run("trusted subnet - allowed", func(t *testing.T) {
+		srv.cfg.Server.FlagTrustedSubnet = "192.168.1.0/24"
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Real-IP", "192.168.0.1")
-	rec := httptest.NewRecorder()
-	c := srv.echo.NewContext(req, rec)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderXRealIP, "192.168.1.1") // trusted IP
 
-	mw := srv.TrustedSubnetMiddleware(next)
+		rec := httptest.NewRecorder()
+		c := srv.echo.NewContext(req, rec)
 
-	err := mw(c)
+		handler := srv.TrustedSubnetMiddleware(func(c echo.Context) error {
+			return c.NoContent(http.StatusOK)
+		})
 
-	require.NoError(t, err)
-	require.True(t, nextCalled)
+		err := handler(c)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("untrusted IP - forbidden", func(t *testing.T) {
+		srv.cfg.Server.FlagTrustedSubnet = "192.168.1.0/24"
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderXRealIP, "10.0.0.1") // untrusted IP
+
+		rec := httptest.NewRecorder()
+		c := srv.echo.NewContext(req, rec)
+
+		handler := srv.TrustedSubnetMiddleware(func(c echo.Context) error {
+			return c.NoContent(http.StatusOK)
+		})
+
+		err := handler(c)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusForbidden, rec.Code)
+	})
+
+	t.Run("no trusted subnet configured - forbidden", func(t *testing.T) {
+		srv.cfg.Server.FlagTrustedSubnet = "" // trusted subnet disabled → block all
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderXRealIP, "192.168.1.1") // any IP
+
+		rec := httptest.NewRecorder()
+		c := srv.echo.NewContext(req, rec)
+
+		handler := srv.TrustedSubnetMiddleware(func(c echo.Context) error {
+			return c.NoContent(http.StatusOK)
+		})
+
+		err := handler(c)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusForbidden, rec.Code)
+	})
 }

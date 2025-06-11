@@ -47,20 +47,20 @@ type Shortener interface {
 	// Returns ErrNoContent if no data is available.
 	GetAll(ctx context.Context, userID int) ([]storage.Data, error)
 
-	// DeleteBatch deletes a batch of short URLs from storage.
-	DeleteBatch(shorts []string) error
+	// BatchDelete deletes a batch of short URLs from storage.
+	BatchDelete(shorts []string) error
 
 	// DeleteUserURLS deletes the provided list of short URLs for the specified user.
 	// Only URLs owned by the user and not already marked as deleted will be processed.
 	DeleteUserURLS(ctx context.Context, userID int, shorts []string) error
 
-	// HealthCheck performs a health check of the underlying storage.
-	// Returns an error if the storage is not healthy.
-	HealthCheck() error
-
 	// Stats returns service usage statistics:
 	// the total number of stored URLs and the number of registered users.
 	Stats() (urls int, users int, err error)
+
+	// Ping performs a health check of the underlying storage.
+	// Returns an error if the storage is not healthy.
+	Ping() error
 
 	// Gen creates a channel that emits the provided short URLs for batch processing.
 	Gen(shorts ...string) chan string
@@ -124,8 +124,8 @@ func (u *URLService) GetAll(ctx context.Context, userID int) ([]storage.Data, er
 	return data, nil
 }
 
-// DeleteBatch removes a batch of short URLs from storage.
-func (u *URLService) DeleteBatch(shorts []string) error {
+// BatchDelete removes a batch of short URLs from storage.
+func (u *URLService) BatchDelete(shorts []string) error {
 	return u.storage.BatchDelete(shorts)
 }
 
@@ -164,9 +164,9 @@ func (u *URLService) Stats() (urls int, users int, err error) {
 	return u.storage.Stats()
 }
 
-// HealthCheck performs a health check of the storage layer.
+// Ping performs a health check of the storage layer.
 //
 // Returns an error if the storage is not healthy.
-func (u *URLService) HealthCheck() error {
+func (u *URLService) Ping() error {
 	return u.storage.HealthCheck()
 }

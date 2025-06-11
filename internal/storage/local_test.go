@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -72,4 +73,13 @@ func TestLocalStorage_Stats(t *testing.T) {
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, urls, 2)
 	require.GreaterOrEqual(t, users, 2)
+}
+
+func TestLocalStorage_Shutdown(t *testing.T) {
+	st := &LocalStorage{log: logrus.NewEntry(logrus.New())}
+
+	ctx := context.Background()
+
+	err := st.Shutdown(ctx)
+	require.NoError(t, err)
 }

@@ -40,7 +40,7 @@ func (u *URLService) Delete(inCh chan string) chan string {
 				if !ok {
 					//chan closed
 					if len(batch) > 0 {
-						err := u.DeleteBatch(batch)
+						err := u.BatchDelete(batch)
 						if err != nil {
 							u.logger.Errorf("failed to delete Batch: %v", err)
 						}
@@ -54,7 +54,7 @@ func (u *URLService) Delete(inCh chan string) chan string {
 				batch = append(batch, short)
 
 				if len(batch) >= batchSize {
-					err := u.DeleteBatch(batch)
+					err := u.BatchDelete(batch)
 					if err != nil {
 						u.logger.Errorf("failed to delete Batch: %v", err)
 					}
@@ -66,7 +66,7 @@ func (u *URLService) Delete(inCh chan string) chan string {
 
 			case <-timer.C:
 				if len(batch) > 0 {
-					err := u.DeleteBatch(batch)
+					err := u.BatchDelete(batch)
 					if err != nil {
 						u.logger.Errorf("failed to delete Batch: %v", err)
 					}

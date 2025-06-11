@@ -108,7 +108,7 @@ func TestURLService_DeleteBatch(t *testing.T) {
 		mock.EXPECT().BatchDelete(gomock.Any()).Return(nil)
 	})
 
-	err := service.DeleteBatch([]string{"short123", "short456"})
+	err := service.BatchDelete([]string{"short123", "short456"})
 
 	require.NoError(t, err)
 }
@@ -153,7 +153,7 @@ func TestURLService_HealthCheck(t *testing.T) {
 		mock.EXPECT().HealthCheck().Return(nil)
 	})
 
-	err := service.HealthCheck()
+	err := service.Ping()
 
 	require.NoError(t, err)
 }

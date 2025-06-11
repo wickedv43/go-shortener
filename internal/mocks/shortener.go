@@ -56,9 +56,9 @@ func (mr *MockShortenerMockRecorder) Delete(inCh any) *gomock.Call {
 }
 
 // DeleteBatch mocks base method.
-func (m *MockShortener) DeleteBatch(shorts []string) error {
+func (m *MockShortener) BatchDelete(shorts []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteBatch", shorts)
+	ret := m.ctrl.Call(m, "BatchDelete", shorts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -66,7 +66,7 @@ func (m *MockShortener) DeleteBatch(shorts []string) error {
 // DeleteBatch indicates an expected call of DeleteBatch.
 func (mr *MockShortenerMockRecorder) DeleteBatch(shorts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBatch", reflect.TypeOf((*MockShortener)(nil).DeleteBatch), shorts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchDelete", reflect.TypeOf((*MockShortener)(nil).BatchDelete), shorts)
 }
 
 // DeleteUserURLS mocks base method.
@@ -150,9 +150,9 @@ func (mr *MockShortenerMockRecorder) GetAll(ctx, userID any) *gomock.Call {
 }
 
 // HealthCheck mocks base method.
-func (m *MockShortener) HealthCheck() error {
+func (m *MockShortener) Ping() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HealthCheck")
+	ret := m.ctrl.Call(m, "Ping")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -160,7 +160,7 @@ func (m *MockShortener) HealthCheck() error {
 // HealthCheck indicates an expected call of HealthCheck.
 func (mr *MockShortenerMockRecorder) HealthCheck() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealthCheck", reflect.TypeOf((*MockShortener)(nil).HealthCheck))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockShortener)(nil).Ping))
 }
 
 // Save mocks base method.

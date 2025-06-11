@@ -23,7 +23,7 @@ func setupTestServer(tb testing.TB, configureMock func(*mocks.MockShortener)) *S
 
 	do.Provide(container, func(i do.Injector) (*config.Config, error) {
 		return &config.Config{Server: config.Server{FlagRunAddr: ":8080",
-			FlagTrustedSubnet: "192.168.0.0/16"}}, nil
+			FlagTrustedSubnet: "192.168.1.0/24"}}, nil
 	})
 	do.Provide(container, logger.NewLogger)
 

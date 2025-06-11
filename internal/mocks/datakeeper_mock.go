@@ -102,7 +102,7 @@ func (mr *MockDataKeeperMockRecorder) GetAll(c, userID any) *gomock.Call {
 // HealthCheck mocks base method.
 func (m *MockDataKeeper) HealthCheck() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HealthCheck")
+	ret := m.ctrl.Call(m, "Ping")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -110,7 +110,7 @@ func (m *MockDataKeeper) HealthCheck() error {
 // HealthCheck indicates an expected call of HealthCheck.
 func (mr *MockDataKeeperMockRecorder) HealthCheck() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealthCheck", reflect.TypeOf((*MockDataKeeper)(nil).HealthCheck))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockDataKeeper)(nil).HealthCheck))
 }
 
 // Save mocks base method.

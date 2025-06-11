@@ -112,7 +112,7 @@ func (s *Server) CreateJSON(c echo.Context) error {
 
 // Ping is a health check endpoint that verifies database connectivity.
 func (s *Server) Ping(c echo.Context) error {
-	err := s.URLService.HealthCheck()
+	err := s.URLService.Ping()
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, url.ErrInternal.Error())
