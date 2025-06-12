@@ -1,7 +1,43 @@
 version: '3'
 
 tasks:
-  server:
+  generate:
+    go generate ./cmd/shortener
+  cert:
+    mkcert -key-file cert/server.key -cert-file cert/server.crt localhost 127.0.0.1 ::1
+  http:
     go run ./cmd/shortener/.
-  post:
-    go run ./cmd/client/.
+  https:
+    cmds:
+    - go run ./cmd/shortener/. -s
+  config:
+    cmds:
+      - go run ./cmd/shortener/. -c="./configs/config.json"
+  mock:
+    cmds:
+      - mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
+      - mockgen -source=internal/url/interface.go -destination=internal/mocks/shortener.go -package=mocks
+
+
+
+
+
+  protoc:
+    cmds:
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+  protoc-create:
+    protoc -I=internal/grpcapi --go_out=Minternal/grpcapi/server.proto=internal/grpcapi:. --go-grpc_out=Minternal/grpcapi/server.proto=internal/grpcapi:. internal/grpcapi/server.proto
+
+  grpc-client:
+    cmds:
+      - go run ./cmd/grpcclient/.
+
+
+  docker:
+    docker run --name my-postgres -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
+
+  test:
+    cmds:
+      - go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=count ./...
+      - go tool cover -func coverage.out
