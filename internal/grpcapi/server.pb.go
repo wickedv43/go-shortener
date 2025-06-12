@@ -4,7 +4,7 @@
 // 	protoc        v6.31.1
 // source: server.proto
 
-package grpc
+package grpcapi
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -494,50 +494,6 @@ func (x *DeleteUserURLsRequest) GetShortUrls() []string {
 	return nil
 }
 
-type DeleteUserURLsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeletedCount  int32                  `protobuf:"varint,1,opt,name=deleted_count,json=deletedCount,proto3" json:"deleted_count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteUserURLsResponse) Reset() {
-	*x = DeleteUserURLsResponse{}
-	mi := &file_server_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteUserURLsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteUserURLsResponse) ProtoMessage() {}
-
-func (x *DeleteUserURLsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteUserURLsResponse.ProtoReflect.Descriptor instead.
-func (*DeleteUserURLsResponse) Descriptor() ([]byte, []int) {
-	return file_server_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *DeleteUserURLsResponse) GetDeletedCount() int32 {
-	if x != nil {
-		return x.DeletedCount
-	}
-	return 0
-}
-
 type StatsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Urls          int32                  `protobuf:"varint,1,opt,name=urls,proto3" json:"urls,omitempty"`
@@ -548,7 +504,7 @@ type StatsResponse struct {
 
 func (x *StatsResponse) Reset() {
 	*x = StatsResponse{}
-	mi := &file_server_proto_msgTypes[11]
+	mi := &file_server_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +516,7 @@ func (x *StatsResponse) String() string {
 func (*StatsResponse) ProtoMessage() {}
 
 func (x *StatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_msgTypes[11]
+	mi := &file_server_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +529,7 @@ func (x *StatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
 func (*StatsResponse) Descriptor() ([]byte, []int) {
-	return file_server_proto_rawDescGZIP(), []int{11}
+	return file_server_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *StatsResponse) GetUrls() int32 {
@@ -600,7 +556,7 @@ type BatchRequest_Item struct {
 
 func (x *BatchRequest_Item) Reset() {
 	*x = BatchRequest_Item{}
-	mi := &file_server_proto_msgTypes[12]
+	mi := &file_server_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +568,7 @@ func (x *BatchRequest_Item) String() string {
 func (*BatchRequest_Item) ProtoMessage() {}
 
 func (x *BatchRequest_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_msgTypes[12]
+	mi := &file_server_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,7 +608,7 @@ type BatchResponse_Item struct {
 
 func (x *BatchResponse_Item) Reset() {
 	*x = BatchResponse_Item{}
-	mi := &file_server_proto_msgTypes[13]
+	mi := &file_server_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -664,7 +620,7 @@ func (x *BatchResponse_Item) String() string {
 func (*BatchResponse_Item) ProtoMessage() {}
 
 func (x *BatchResponse_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_msgTypes[13]
+	mi := &file_server_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +654,7 @@ var File_server_proto protoreflect.FileDescriptor
 
 const file_server_proto_rawDesc = "" +
 	"\n" +
-	"\fserver.proto\x12\x04grpc\x1a\x1bgoogle/protobuf/empty.proto\":\n" +
+	"\fserver.proto\x12\agrpcapi\x1a\x1bgoogle/protobuf/empty.proto\":\n" +
 	"\rCreateRequest\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x05R\x06userId\"-\n" +
@@ -707,15 +663,15 @@ const file_server_proto_rawDesc = "" +
 	"\x0fGetShortRequest\x12\x1b\n" +
 	"\tshort_url\x18\x01 \x01(\tR\bshortUrl\"5\n" +
 	"\x10GetShortResponse\x12!\n" +
-	"\foriginal_url\x18\x01 \x01(\tR\voriginalUrl\"\xa6\x01\n" +
+	"\foriginal_url\x18\x01 \x01(\tR\voriginalUrl\"\xa9\x01\n" +
 	"\fBatchRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12+\n" +
-	"\x04urls\x18\x02 \x03(\v2\x17.grpc.BatchRequest.ItemR\x04urls\x1aP\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12.\n" +
+	"\x04urls\x18\x02 \x03(\v2\x1a.grpcapi.BatchRequest.ItemR\x04urls\x1aP\n" +
 	"\x04Item\x12%\n" +
 	"\x0ecorrelation_id\x18\x01 \x01(\tR\rcorrelationId\x12!\n" +
-	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"\x89\x01\n" +
-	"\rBatchResponse\x12,\n" +
-	"\x04urls\x18\x01 \x03(\v2\x18.grpc.BatchResponse.ItemR\x04urls\x1aJ\n" +
+	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"\x8c\x01\n" +
+	"\rBatchResponse\x12/\n" +
+	"\x04urls\x18\x01 \x03(\v2\x1b.grpcapi.BatchResponse.ItemR\x04urls\x1aJ\n" +
 	"\x04Item\x12%\n" +
 	"\x0ecorrelation_id\x18\x01 \x01(\tR\rcorrelationId\x12\x1b\n" +
 	"\tshort_url\x18\x02 \x01(\tR\bshortUrl\"(\n" +
@@ -723,26 +679,24 @@ const file_server_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x05R\x06userId\"I\n" +
 	"\aURLData\x12\x1b\n" +
 	"\tshort_url\x18\x01 \x01(\tR\bshortUrl\x12!\n" +
-	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"3\n" +
-	"\x0eGetAllResponse\x12!\n" +
-	"\x04urls\x18\x01 \x03(\v2\r.grpc.URLDataR\x04urls\"O\n" +
+	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"6\n" +
+	"\x0eGetAllResponse\x12$\n" +
+	"\x04urls\x18\x01 \x03(\v2\x10.grpcapi.URLDataR\x04urls\"O\n" +
 	"\x15DeleteUserURLsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x1d\n" +
 	"\n" +
-	"short_urls\x18\x02 \x03(\tR\tshortUrls\"=\n" +
-	"\x16DeleteUserURLsResponse\x12#\n" +
-	"\rdeleted_count\x18\x01 \x01(\x05R\fdeletedCount\"9\n" +
+	"short_urls\x18\x02 \x03(\tR\tshortUrls\"9\n" +
 	"\rStatsResponse\x12\x12\n" +
 	"\x04urls\x18\x01 \x01(\x05R\x04urls\x12\x14\n" +
-	"\x05users\x18\x02 \x01(\x05R\x05users2\x9d\x03\n" +
-	"\tShortener\x123\n" +
-	"\x06Create\x12\x13.grpc.CreateRequest\x1a\x14.grpc.CreateResponse\x129\n" +
-	"\bGetShort\x12\x15.grpc.GetShortRequest\x1a\x16.grpc.GetShortResponse\x120\n" +
-	"\x05Batch\x12\x12.grpc.BatchRequest\x1a\x13.grpc.BatchResponse\x123\n" +
-	"\x06GetAll\x12\x13.grpc.GetAllRequest\x1a\x14.grpc.GetAllResponse\x12K\n" +
-	"\x0eDeleteUserURLs\x12\x1b.grpc.DeleteUserURLsRequest\x1a\x1c.grpc.DeleteUserURLsResponse\x124\n" +
-	"\x05Stats\x12\x16.google.protobuf.Empty\x1a\x13.grpc.StatsResponse\x126\n" +
-	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\x10Z\x0e/internal/grpcb\x06proto3"
+	"\x05users\x18\x02 \x01(\x05R\x05users2\xbb\x03\n" +
+	"\tShortener\x129\n" +
+	"\x06Create\x12\x16.grpcapi.CreateRequest\x1a\x17.grpcapi.CreateResponse\x12<\n" +
+	"\vCreateBatch\x12\x15.grpcapi.BatchRequest\x1a\x16.grpcapi.BatchResponse\x12?\n" +
+	"\bGetShort\x12\x18.grpcapi.GetShortRequest\x1a\x19.grpcapi.GetShortResponse\x129\n" +
+	"\x06GetAll\x12\x16.grpcapi.GetAllRequest\x1a\x17.grpcapi.GetAllResponse\x12H\n" +
+	"\x0eDeleteUserURLs\x12\x1e.grpcapi.DeleteUserURLsRequest\x1a\x16.google.protobuf.Empty\x127\n" +
+	"\x05Stats\x12\x16.google.protobuf.Empty\x1a\x16.grpcapi.StatsResponse\x126\n" +
+	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\x13Z\x11/internal/grpcapib\x06proto3"
 
 var (
 	file_server_proto_rawDescOnce sync.Once
@@ -756,42 +710,41 @@ func file_server_proto_rawDescGZIP() []byte {
 	return file_server_proto_rawDescData
 }
 
-var file_server_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_server_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_server_proto_goTypes = []any{
-	(*CreateRequest)(nil),          // 0: grpc.CreateRequest
-	(*CreateResponse)(nil),         // 1: grpc.CreateResponse
-	(*GetShortRequest)(nil),        // 2: grpc.GetShortRequest
-	(*GetShortResponse)(nil),       // 3: grpc.GetShortResponse
-	(*BatchRequest)(nil),           // 4: grpc.BatchRequest
-	(*BatchResponse)(nil),          // 5: grpc.BatchResponse
-	(*GetAllRequest)(nil),          // 6: grpc.GetAllRequest
-	(*URLData)(nil),                // 7: grpc.URLData
-	(*GetAllResponse)(nil),         // 8: grpc.GetAllResponse
-	(*DeleteUserURLsRequest)(nil),  // 9: grpc.DeleteUserURLsRequest
-	(*DeleteUserURLsResponse)(nil), // 10: grpc.DeleteUserURLsResponse
-	(*StatsResponse)(nil),          // 11: grpc.StatsResponse
-	(*BatchRequest_Item)(nil),      // 12: grpc.BatchRequest.Item
-	(*BatchResponse_Item)(nil),     // 13: grpc.BatchResponse.Item
-	(*emptypb.Empty)(nil),          // 14: google.protobuf.Empty
+	(*CreateRequest)(nil),         // 0: grpcapi.CreateRequest
+	(*CreateResponse)(nil),        // 1: grpcapi.CreateResponse
+	(*GetShortRequest)(nil),       // 2: grpcapi.GetShortRequest
+	(*GetShortResponse)(nil),      // 3: grpcapi.GetShortResponse
+	(*BatchRequest)(nil),          // 4: grpcapi.BatchRequest
+	(*BatchResponse)(nil),         // 5: grpcapi.BatchResponse
+	(*GetAllRequest)(nil),         // 6: grpcapi.GetAllRequest
+	(*URLData)(nil),               // 7: grpcapi.URLData
+	(*GetAllResponse)(nil),        // 8: grpcapi.GetAllResponse
+	(*DeleteUserURLsRequest)(nil), // 9: grpcapi.DeleteUserURLsRequest
+	(*StatsResponse)(nil),         // 10: grpcapi.StatsResponse
+	(*BatchRequest_Item)(nil),     // 11: grpcapi.BatchRequest.Item
+	(*BatchResponse_Item)(nil),    // 12: grpcapi.BatchResponse.Item
+	(*emptypb.Empty)(nil),         // 13: google.protobuf.Empty
 }
 var file_server_proto_depIdxs = []int32{
-	12, // 0: grpc.BatchRequest.urls:type_name -> grpc.BatchRequest.Item
-	13, // 1: grpc.BatchResponse.urls:type_name -> grpc.BatchResponse.Item
-	7,  // 2: grpc.GetAllResponse.urls:type_name -> grpc.URLData
-	0,  // 3: grpc.Shortener.Create:input_type -> grpc.CreateRequest
-	2,  // 4: grpc.Shortener.GetShort:input_type -> grpc.GetShortRequest
-	4,  // 5: grpc.Shortener.Batch:input_type -> grpc.BatchRequest
-	6,  // 6: grpc.Shortener.GetAll:input_type -> grpc.GetAllRequest
-	9,  // 7: grpc.Shortener.DeleteUserURLs:input_type -> grpc.DeleteUserURLsRequest
-	14, // 8: grpc.Shortener.Stats:input_type -> google.protobuf.Empty
-	14, // 9: grpc.Shortener.Ping:input_type -> google.protobuf.Empty
-	1,  // 10: grpc.Shortener.Create:output_type -> grpc.CreateResponse
-	3,  // 11: grpc.Shortener.GetShort:output_type -> grpc.GetShortResponse
-	5,  // 12: grpc.Shortener.Batch:output_type -> grpc.BatchResponse
-	8,  // 13: grpc.Shortener.GetAll:output_type -> grpc.GetAllResponse
-	10, // 14: grpc.Shortener.DeleteUserURLs:output_type -> grpc.DeleteUserURLsResponse
-	11, // 15: grpc.Shortener.Stats:output_type -> grpc.StatsResponse
-	14, // 16: grpc.Shortener.Ping:output_type -> google.protobuf.Empty
+	11, // 0: grpcapi.BatchRequest.urls:type_name -> grpcapi.BatchRequest.Item
+	12, // 1: grpcapi.BatchResponse.urls:type_name -> grpcapi.BatchResponse.Item
+	7,  // 2: grpcapi.GetAllResponse.urls:type_name -> grpcapi.URLData
+	0,  // 3: grpcapi.Shortener.Create:input_type -> grpcapi.CreateRequest
+	4,  // 4: grpcapi.Shortener.CreateBatch:input_type -> grpcapi.BatchRequest
+	2,  // 5: grpcapi.Shortener.GetShort:input_type -> grpcapi.GetShortRequest
+	6,  // 6: grpcapi.Shortener.GetAll:input_type -> grpcapi.GetAllRequest
+	9,  // 7: grpcapi.Shortener.DeleteUserURLs:input_type -> grpcapi.DeleteUserURLsRequest
+	13, // 8: grpcapi.Shortener.Stats:input_type -> google.protobuf.Empty
+	13, // 9: grpcapi.Shortener.Ping:input_type -> google.protobuf.Empty
+	1,  // 10: grpcapi.Shortener.Create:output_type -> grpcapi.CreateResponse
+	5,  // 11: grpcapi.Shortener.CreateBatch:output_type -> grpcapi.BatchResponse
+	3,  // 12: grpcapi.Shortener.GetShort:output_type -> grpcapi.GetShortResponse
+	8,  // 13: grpcapi.Shortener.GetAll:output_type -> grpcapi.GetAllResponse
+	13, // 14: grpcapi.Shortener.DeleteUserURLs:output_type -> google.protobuf.Empty
+	10, // 15: grpcapi.Shortener.Stats:output_type -> grpcapi.StatsResponse
+	13, // 16: grpcapi.Shortener.Ping:output_type -> google.protobuf.Empty
 	10, // [10:17] is the sub-list for method output_type
 	3,  // [3:10] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -810,7 +763,7 @@ func file_server_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_server_proto_rawDesc), len(file_server_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

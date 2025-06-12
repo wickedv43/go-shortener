@@ -10,6 +10,7 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/wickedv43/go-shortener/internal/config"
+	"github.com/wickedv43/go-shortener/internal/grpcserver"
 	"github.com/wickedv43/go-shortener/internal/logger"
 	"github.com/wickedv43/go-shortener/internal/server"
 	"github.com/wickedv43/go-shortener/internal/storage"
@@ -36,6 +37,8 @@ func main() {
 	do.Provide(i, storage.NewLocalStorage)
 	do.Provide(i, storage.NewPostgresStorage)
 
+	do.Provide(i, grpcserver.NewServer)
+
 	do.Provide(i, func(i do.Injector) (url.Shortener, error) {
 		return url.NewURLService(i)
 	})
@@ -52,6 +55,7 @@ func main() {
 
 	flag.Parse()
 
+	go do.MustInvoke[*grpcserver.Server](i).Start()
 	go do.MustInvoke[*server.Server](i).Start()
 
 	signals := []os.Signal{syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT, os.Interrupt}

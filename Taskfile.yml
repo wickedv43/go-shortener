@@ -26,5 +26,8 @@ tasks:
     cmds:
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
       - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+  protoc-create:
+    protoc -I=internal/grpc --go_out=Minternal/grpc/server.proto=internal/grpc:. --go-grpc_out=Minternal/grpc/server.proto=internal/grpc:. internal/grpc/server.proto
+
   docker:
     docker run --name my-postgres -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres

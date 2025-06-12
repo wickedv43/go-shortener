@@ -1,8 +1,8 @@
   syntax = "proto3";
 
-  package grpc;
+  package grpcapi;
 
-  option go_package = "/internal/grpc";
+  option go_package = "/internal/grpcapi";
 
   import "google/protobuf/empty.proto";
 
@@ -58,10 +58,6 @@
     repeated string short_urls = 2;
   }
 
-  message DeleteUserURLsResponse {
-    int32 deleted_count = 1;
-  }
-
   message StatsResponse {
     int32 urls = 1;
     int32 users = 2;
@@ -69,10 +65,10 @@
 
   service Shortener {
     rpc Create(CreateRequest) returns (CreateResponse);
+    rpc CreateBatch(BatchRequest) returns (BatchResponse);
     rpc GetShort(GetShortRequest) returns (GetShortResponse);
-    rpc Batch(BatchRequest) returns (BatchResponse);
     rpc GetAll(GetAllRequest) returns (GetAllResponse);
-    rpc DeleteUserURLs(DeleteUserURLsRequest) returns (DeleteUserURLsResponse);
+    rpc DeleteUserURLs(DeleteUserURLsRequest) returns (google.protobuf.Empty);
     rpc Stats(google.protobuf.Empty) returns (StatsResponse);
-    rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty); // можно добавить ping
+    rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
   }
