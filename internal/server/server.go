@@ -42,7 +42,7 @@ func NewServer(i do.Injector) (*Server, error) {
 	s.URLService = do.MustInvoke[url.Shortener](i)
 
 	s.cfg = do.MustInvoke[*config.Config](i)
-	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "server")
+	s.logger = do.MustInvoke[*logger.Logger](i).WithField("component", "echo")
 
 	// pprof endpoints
 	s.echo.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
