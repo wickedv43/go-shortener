@@ -17,7 +17,14 @@ import (
 func (s *Server) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
 	var resp pb.CreateResponse
 
-	data, err := s.URLService.Save(ctx, in.Url, int(in.UserId))
+	ctxUserID := ctx.Value("userID")
+
+	userID, ok := ctxUserID.(int)
+	if !ok {
+		return &resp, status.Error(codes.Unauthenticated, "invalid userID")
+	}
+
+	data, err := s.URLService.Save(ctx, in.Url, userID)
 	if err != nil {
 		if errors.Is(err, url.ErrEmptyURL) {
 			return nil, status.Errorf(codes.Aborted, url.ErrEmptyURL.Error())
@@ -25,7 +32,7 @@ func (s *Server) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateRe
 		if errors.Is(err, url.ErrConflict) {
 			resp.ShortUrl = data.ShortURL
 
-			return &resp, status.Errorf(codes.AlreadyExists, url.ErrConflict.Error())
+			return &resp, nil
 		}
 
 		return nil, status.Error(codes.Internal, err.Error())
@@ -45,8 +52,15 @@ func (s *Server) CreateBatch(ctx context.Context, in *pb.BatchRequest) (*pb.Batc
 		data storage.Data
 	)
 
+	ctxUserID := ctx.Value("userID")
+
+	userID, ok := ctxUserID.(int)
+	if !ok {
+		return &resp, status.Error(codes.Unauthenticated, "invalid userID")
+	}
+
 	for _, req := range in.Urls {
-		data, err = s.URLService.Save(ctx, req.OriginalUrl, int(in.UserId))
+		data, err = s.URLService.Save(ctx, req.OriginalUrl, userID)
 		if err != nil {
 			return nil, status.Error(codes.Internal, url.ErrInternal.Error())
 		}
@@ -79,10 +93,17 @@ func (s *Server) GetShort(ctx context.Context, in *pb.GetShortRequest) (*pb.GetS
 }
 
 // GetAll retrieves all URLs created by the given user.
-func (s *Server) GetAll(ctx context.Context, in *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+func (s *Server) GetAll(ctx context.Context, _ *emptypb.Empty) (*pb.GetAllResponse, error) {
 	var resp pb.GetAllResponse
 
-	urls, err := s.URLService.GetAll(ctx, int(in.UserId))
+	ctxUserID := ctx.Value("userID")
+
+	userID, ok := ctxUserID.(int)
+	if !ok {
+		return &resp, status.Error(codes.Unauthenticated, "invalid userID")
+	}
+
+	urls, err := s.URLService.GetAll(ctx, userID)
 	if err != nil {
 		if errors.Is(err, url.ErrNoContent) {
 			return nil, status.Errorf(codes.NotFound, url.ErrNoContent.Error())
@@ -105,8 +126,14 @@ func (s *Server) GetAll(ctx context.Context, in *pb.GetAllRequest) (*pb.GetAllRe
 
 // DeleteUserURLs deletes a list of short URLs for the given user.
 func (s *Server) DeleteUserURLs(ctx context.Context, in *pb.DeleteUserURLsRequest) (*emptypb.Empty, error) {
+	ctxUserID := ctx.Value("userID")
 
-	err := s.URLService.DeleteUserURLS(ctx, int(in.UserId), in.ShortUrls)
+	userID, ok := ctxUserID.(int)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "invalid userID")
+	}
+
+	err := s.URLService.DeleteUserURLS(ctx, userID, in.ShortUrls)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

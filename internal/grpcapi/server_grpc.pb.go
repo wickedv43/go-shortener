@@ -36,7 +36,7 @@ type ShortenerClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	CreateBatch(ctx context.Context, in *BatchRequest, opts ...grpc.CallOption) (*BatchResponse, error)
 	GetShort(ctx context.Context, in *GetShortRequest, opts ...grpc.CallOption) (*GetShortResponse, error)
-	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (*GetAllResponse, error)
+	GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllResponse, error)
 	DeleteUserURLs(ctx context.Context, in *DeleteUserURLsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsResponse, error)
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -80,7 +80,7 @@ func (c *shortenerClient) GetShort(ctx context.Context, in *GetShortRequest, opt
 	return out, nil
 }
 
-func (c *shortenerClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (*GetAllResponse, error) {
+func (c *shortenerClient) GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAllResponse)
 	err := c.cc.Invoke(ctx, Shortener_GetAll_FullMethodName, in, out, cOpts...)
@@ -127,7 +127,7 @@ type ShortenerServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	CreateBatch(context.Context, *BatchRequest) (*BatchResponse, error)
 	GetShort(context.Context, *GetShortRequest) (*GetShortResponse, error)
-	GetAll(context.Context, *GetAllRequest) (*GetAllResponse, error)
+	GetAll(context.Context, *emptypb.Empty) (*GetAllResponse, error)
 	DeleteUserURLs(context.Context, *DeleteUserURLsRequest) (*emptypb.Empty, error)
 	Stats(context.Context, *emptypb.Empty) (*StatsResponse, error)
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
@@ -150,7 +150,7 @@ func (UnimplementedShortenerServer) CreateBatch(context.Context, *BatchRequest) 
 func (UnimplementedShortenerServer) GetShort(context.Context, *GetShortRequest) (*GetShortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShort not implemented")
 }
-func (UnimplementedShortenerServer) GetAll(context.Context, *GetAllRequest) (*GetAllResponse, error) {
+func (UnimplementedShortenerServer) GetAll(context.Context, *emptypb.Empty) (*GetAllResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
 func (UnimplementedShortenerServer) DeleteUserURLs(context.Context, *DeleteUserURLsRequest) (*emptypb.Empty, error) {
@@ -238,7 +238,7 @@ func _Shortener_GetShort_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _Shortener_GetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func _Shortener_GetAll_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: Shortener_GetAll_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).GetAll(ctx, req.(*GetAllRequest))
+		return srv.(ShortenerServer).GetAll(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

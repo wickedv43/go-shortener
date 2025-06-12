@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"github.com/wickedv43/go-shortener/internal/auth"
 	"github.com/wickedv43/go-shortener/internal/config"
 	"github.com/wickedv43/go-shortener/internal/storage"
 )
@@ -89,14 +90,14 @@ func setupStubServer() *Server {
 }
 
 func (s *Server) createCustomJWT(userID int) (string, error) {
-	claims := Claims{
+	claims := auth.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 		UserID: userID,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
+	return token.SignedString(auth.SecretKey)
 }
 
 func Example_create() {

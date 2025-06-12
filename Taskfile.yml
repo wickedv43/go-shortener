@@ -18,16 +18,26 @@ tasks:
       - mockgen -source=internal/storage/storage.go -destination=internal/mocks/datakeeper_mock.go -package=mocks
       - mockgen -source=internal/url/interface.go -destination=internal/mocks/shortener.go -package=mocks
 
-  test:
-    cmds:
-      - go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=count ./...
-      - go tool cover -func coverage.out
+
+
+
+
   protoc:
     cmds:
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
       - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
   protoc-create:
-    protoc -I=internal/grpc --go_out=Minternal/grpc/server.proto=internal/grpc:. --go-grpc_out=Minternal/grpc/server.proto=internal/grpc:. internal/grpc/server.proto
+    protoc -I=internal/grpcapi --go_out=Minternal/grpcapi/server.proto=internal/grpcapi:. --go-grpc_out=Minternal/grpcapi/server.proto=internal/grpcapi:. internal/grpcapi/server.proto
+
+  grpc-client:
+    cmds:
+      - go run ./cmd/grpcclient/.
+
 
   docker:
     docker run --name my-postgres -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -e POSTGRES_DB=praktikum -p 5432:5432 -d postgres
+
+  test:
+    cmds:
+      - go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=count ./...
+      - go tool cover -func coverage.out

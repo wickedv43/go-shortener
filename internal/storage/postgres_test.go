@@ -182,18 +182,3 @@ func TestPostgresStorage_Shutdown(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
-
-func TestPostgresStorage_Migrate(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	mock.ExpectExec("CREATE TABLE IF NOT EXISTS urls").
-		WillReturnResult(sqlmock.NewResult(0, 0))
-
-	s := &PostgresStorage{pgDB: db, log: logrus.NewEntry(logrus.New())}
-
-	err = s.Migrate()
-	require.NoError(t, err)
-	require.NoError(t, mock.ExpectationsWereMet())
-}

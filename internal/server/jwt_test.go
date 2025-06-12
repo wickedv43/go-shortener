@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
+	"github.com/wickedv43/go-shortener/internal/auth"
 	"github.com/wickedv43/go-shortener/internal/mocks"
 )
 
@@ -40,19 +41,19 @@ func TestAuthMiddleware_NewCookie(t *testing.T) {
 	require.Len(t, cookies, 1)
 
 	cookie := cookies[0]
-	require.Equal(t, cookieName, cookie.Name)
+	require.Equal(t, auth.CookieName, cookie.Name)
 	require.NotEmpty(t, cookie.Value)
 }
 
 func TestAuthMiddleware_ValidCookie(t *testing.T) {
 	srv := setupTestServer(t, func(mock *mocks.MockShortener) {})
 
-	token, err := srv.createJWT()
+	token, err := auth.CreateJWT()
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{
-		Name:     cookieName,
+		Name:     auth.CookieName,
 		Value:    token,
 		HttpOnly: true,
 	})
@@ -78,7 +79,7 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{
-		Name:     cookieName,
+		Name:     auth.CookieName,
 		Value:    "bad.token.value",
 		HttpOnly: true,
 	})

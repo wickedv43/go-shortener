@@ -8,7 +8,6 @@
 
   message CreateRequest {
     string url = 1;
-    int32 user_id = 2;
   }
 
   message CreateResponse {
@@ -28,7 +27,6 @@
       string correlation_id = 1;
       string original_url = 2;
     }
-    int32 user_id = 1;
     repeated Item urls = 2;
   }
 
@@ -38,10 +36,6 @@
       string short_url = 2;
     }
     repeated Item urls = 1;
-  }
-
-  message GetAllRequest {
-    int32 user_id = 1;
   }
 
   message URLData {
@@ -54,8 +48,7 @@
   }
 
   message DeleteUserURLsRequest {
-    int32 user_id = 1;
-    repeated string short_urls = 2;
+    repeated string short_urls = 1;
   }
 
   message StatsResponse {
@@ -67,7 +60,7 @@
     rpc Create(CreateRequest) returns (CreateResponse);
     rpc CreateBatch(BatchRequest) returns (BatchResponse);
     rpc GetShort(GetShortRequest) returns (GetShortResponse);
-    rpc GetAll(GetAllRequest) returns (GetAllResponse);
+    rpc GetAll(google.protobuf.Empty) returns (GetAllResponse);
     rpc DeleteUserURLs(DeleteUserURLsRequest) returns (google.protobuf.Empty);
     rpc Stats(google.protobuf.Empty) returns (StatsResponse);
     rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);

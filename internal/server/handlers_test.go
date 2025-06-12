@@ -430,7 +430,7 @@ func TestServer_Stats(t *testing.T) {
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/internal/stats", nil)
-	req.Header.Set("X-Real-IP", "192.168.0.1") // Trusted subnet test
+	req.Header.Set("X-Real-IP", "192.168.1.0") // Trusted subnet test
 
 	resp := httptest.NewRecorder()
 	server.echo.ServeHTTP(resp, req)

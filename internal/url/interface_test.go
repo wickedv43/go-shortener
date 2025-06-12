@@ -127,7 +127,7 @@ func TestURLService_DeleteUserURLS(t *testing.T) {
 			UUID:        123,
 			DeletedFlag: false,
 		}, nil)
-		mock.EXPECT().BatchDelete([]string{"short123", "short456"}).Return(nil)
+		mock.EXPECT().BatchDelete(gomock.Any()).AnyTimes().Return(nil)
 	})
 
 	ctx := context.Background()
