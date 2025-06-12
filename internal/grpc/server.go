@@ -27,6 +27,9 @@ func NewServer(i do.Injector) (*Server, error) {
 		cfg:        do.MustInvoke[*config.Config](i),
 		log:        do.MustInvoke[*logger.Logger](i).WithField("component", "grpc"),
 	}
+
+	RegisterShortenerServer(s.GRPC, s)
+
 	return s, nil
 }
 
