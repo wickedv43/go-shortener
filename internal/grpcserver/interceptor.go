@@ -14,6 +14,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type ctxKey string
+
+const userIDKey ctxKey = "userID"
+
 const bearerPrefix = "Bearer "
 
 // ChainUnaryInterceptors chains multiple grpc.UnaryServerInterceptor functions into a single interceptor.
@@ -165,7 +169,7 @@ func (s *Server) AuthInterceptor() grpc.UnaryServerInterceptor {
 			}
 		}
 
-		ctx = context.WithValue(ctx, "userID", userID)
+		ctx = context.WithValue(ctx, userIDKey, userID)
 
 		return handler(ctx, req)
 	}

@@ -26,7 +26,7 @@ func TestServer_Create(t *testing.T) {
 		URLService: mockShortener,
 	}
 
-	ctx := context.WithValue(context.Background(), "userID", 123)
+	ctx := context.WithValue(context.Background(), userIDKey, 123)
 
 	resp, err := s.Create(ctx, &pb.CreateRequest{
 		Url: "http://example.com",
@@ -51,7 +51,7 @@ func TestServer_CreateBatch(t *testing.T) {
 		cfg:        &config.Config{Server: config.Server{FlagSuffixAddr: "http://localhost:8080"}},
 	}
 
-	ctx := context.WithValue(context.Background(), "userID", 123)
+	ctx := context.WithValue(context.Background(), userIDKey, 123)
 
 	resp, err := s.CreateBatch(ctx, &pb.BatchRequest{
 		Urls: []*pb.BatchRequest_Item{
@@ -80,7 +80,7 @@ func TestServer_GetAll(t *testing.T) {
 		URLService: mockShortener,
 	}
 
-	ctx := context.WithValue(context.Background(), "userID", 123)
+	ctx := context.WithValue(context.Background(), userIDKey, 123)
 
 	resp, err := s.GetAll(ctx, &emptypb.Empty{})
 
@@ -104,7 +104,7 @@ func TestServer_DeleteUserURLs(t *testing.T) {
 		URLService: mockShortener,
 	}
 
-	ctx := context.WithValue(context.Background(), "userID", 123)
+	ctx := context.WithValue(context.Background(), userIDKey, 123)
 
 	_, err := s.DeleteUserURLs(ctx, &pb.DeleteUserURLsRequest{
 		ShortUrls: []string{"short1", "short2"},

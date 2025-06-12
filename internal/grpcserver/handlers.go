@@ -17,7 +17,7 @@ import (
 func (s *Server) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
 	var resp pb.CreateResponse
 
-	ctxUserID := ctx.Value("userID")
+	ctxUserID := ctx.Value(userIDKey)
 
 	userID, ok := ctxUserID.(int)
 	if !ok {
@@ -52,7 +52,7 @@ func (s *Server) CreateBatch(ctx context.Context, in *pb.BatchRequest) (*pb.Batc
 		data storage.Data
 	)
 
-	ctxUserID := ctx.Value("userID")
+	ctxUserID := ctx.Value(userIDKey)
 
 	userID, ok := ctxUserID.(int)
 	if !ok {
@@ -96,7 +96,7 @@ func (s *Server) GetShort(ctx context.Context, in *pb.GetShortRequest) (*pb.GetS
 func (s *Server) GetAll(ctx context.Context, _ *emptypb.Empty) (*pb.GetAllResponse, error) {
 	var resp pb.GetAllResponse
 
-	ctxUserID := ctx.Value("userID")
+	ctxUserID := ctx.Value(userIDKey)
 
 	userID, ok := ctxUserID.(int)
 	if !ok {
@@ -126,7 +126,7 @@ func (s *Server) GetAll(ctx context.Context, _ *emptypb.Empty) (*pb.GetAllRespon
 
 // DeleteUserURLs deletes a list of short URLs for the given user.
 func (s *Server) DeleteUserURLs(ctx context.Context, in *pb.DeleteUserURLsRequest) (*emptypb.Empty, error) {
-	ctxUserID := ctx.Value("userID")
+	ctxUserID := ctx.Value(userIDKey)
 
 	userID, ok := ctxUserID.(int)
 	if !ok {

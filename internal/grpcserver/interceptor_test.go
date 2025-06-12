@@ -86,7 +86,7 @@ func TestAuthInterceptor(t *testing.T) {
 	}
 
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		userID, ok := ctx.Value("userID").(int)
+		userID, ok := ctx.Value(userIDKey).(int)
 		require.True(t, ok)
 		require.NotZero(t, userID)
 
